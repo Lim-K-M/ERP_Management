@@ -1,0 +1,19 @@
+# docker-compose.yml
+services:
+  postgres:
+    image: postgres:16.4              # :latest 금지 · 태그 핀
+    environment:
+      POSTGRES_DB: emko
+      POSTGRES_USER: emko
+      POSTGRES_PASSWORD: ${DB_PASSWORD}   # .env 주입 · 없으면 안 뜸
+    ports: [ "5433:5432" ]        # 호스트5433 → 컨테이너5432 (5432 선점 피함)
+    volumes: [ pgdata:/var/lib/postgresql/data ]
+  pgadmin:
+    image: dpage/pgadmin4:8.14          # :latest 금지 · 태그 핀
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@emko.com
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}   # .env 에 추가
+    ports: [ "5050:80" ]
+    depends_on: [ postgres ]
+volumes:                          # ← 이름 있는 볼륨은 반드시 선언
+  pgdata:
