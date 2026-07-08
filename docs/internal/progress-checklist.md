@@ -6,7 +6,7 @@
 - [x] 요구사항 정의서를 읽고 이해했다 — `docs/specs/2026-07-08-employee-management-spec.md`
 - [x] `docs/plans/`에 계획서 작성 (범위·파일·검증법) — `docs/plans/2026-07-08-employee-management-plan.md`
 - [x] 승인받고 구현을 시작했다 — Plan Mode 승인 완료 (2026-07-08)
-- [x] `ERP_Vn` 브랜치에서 작업했다 — `main` 직접 커밋 금지 규칙에 따라 `ERP_V1`부터 브랜치 사용
+- [x] `ERP_<역할>` 브랜치에서 작업했다 — `main` 직접 커밋 금지 규칙에 따라 `ERP_initial_setup`부터 브랜치 사용
 - [ ] 커밋을 의미 단위로 나눴다 — 각 브랜치 작업 중 계속 확인
 
 ## 기능 완성
@@ -24,10 +24,10 @@
 ## 참고 — 브랜치 현황
 | 브랜치 | 내용 | 상태 |
 |---|---|---|
-| `ERP_V1` | 초기 자료(규칙/스킬/DDL/docker-compose/spec/plan) | push 완료, PR 대기 |
-| `ERP_V2` | FastAPI 프로젝트 골격 + DB 리플렉션 | 예정 |
-| `ERP_V3` | 신규 스킬(fastapi-service-architecture, jinja2-ssr-frontend) | 예정 |
-| `ERP_V4` | F-01+F-02 (목록/등록) | 예정 |
-| `ERP_V5` | F-03+F-04 (상세/상태변경) | 예정 |
-| `ERP_V6` | F-05 검색/필터 (선택) | 예정 |
-| `ERP_V7` | 인사발령 이력 bonus (선택) | 예정 |
+| `ERP_initial_setup` | 초기 자료(규칙/스킬/DDL/docker-compose/spec/plan) | push 완료, PR 대기 |
+| `ERP_project_scaffold` | FastAPI 프로젝트 골격 + DB 리플렉션 | 예정 |
+| `ERP_skills_fastapi_jinja2` | 신규 스킬(fastapi-service-architecture, jinja2-ssr-frontend) | 예정 |
+| `ERP_employee_list_register` | F-01+F-02 (목록/등록) | 예정 |
+| `ERP_employee_detail_status` | F-03+F-04 (상세/상태변경) | 예정 |
+| `ERP_employee_search_filter` | F-05 검색/필터 (선택) | 예정 |
+| `ERP_employment_history` | 인사발령 이력 bonus (선택) | 예정 |
