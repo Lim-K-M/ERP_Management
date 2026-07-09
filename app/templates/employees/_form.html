@@ -1,0 +1,53 @@
+<form method="post" class="employee-form">
+    <label>사번
+        <input type="text" name="emp_no" value="{{ form.emp_no or '' }}" maxlength="20" required>
+    </label>
+    {% if errors.emp_no %}<p class="error">{{ errors.emp_no }}</p>{% endif %}
+
+    <label>이름
+        <input type="text" name="emp_name" value="{{ form.emp_name or '' }}" maxlength="100" required>
+    </label>
+    {% if errors.emp_name %}<p class="error">{{ errors.emp_name }}</p>{% endif %}
+
+    <label>이메일
+        <input type="email" name="email" value="{{ form.email or '' }}" maxlength="255">
+    </label>
+    {% if errors.email %}<p class="error">{{ errors.email }}</p>{% endif %}
+
+    <label>전화번호
+        <input type="text" name="phone" value="{{ form.phone or '' }}" maxlength="20">
+    </label>
+    {% if errors.phone %}<p class="error">{{ errors.phone }}</p>{% endif %}
+
+    <label>입사일
+        <input type="date" name="hire_date" value="{{ form.hire_date or '' }}" required>
+    </label>
+    {% if errors.hire_date %}<p class="error">{{ errors.hire_date }}</p>{% endif %}
+
+    <label>부서
+        <select name="dept_id">
+            <option value="">선택 안 함</option>
+            {% for dept in departments %}
+            <option value="{{ dept.dept_id }}" {% if form.dept_id|string == dept.dept_id|string %}selected{% endif %}>{{ dept.dept_name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    {% if errors.dept_id %}<p class="error">{{ errors.dept_id }}</p>{% endif %}
+
+    <label>직급
+        <select name="position_id">
+            <option value="">선택 안 함</option>
+            {% for position in positions %}
+            <option value="{{ position.position_id }}" {% if form.position_id|string == position.position_id|string %}selected{% endif %}>{{ position.position_name }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    {% if errors.position_id %}<p class="error">{{ errors.position_id }}</p>{% endif %}
+
+    <label>관리자 ID
+        <input type="number" name="manager_id" value="{{ form.manager_id or '' }}">
+    </label>
+    {% if errors.manager_id %}<p class="error">{{ errors.manager_id }}</p>{% endif %}
+
+    <button type="submit">등록</button>
+</form>

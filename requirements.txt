@@ -4,4 +4,6 @@ sqlalchemy>=2.0
 asyncpg
 pydantic
 pydantic-settings
+pydantic[email]
 jinja2
+python-multipart

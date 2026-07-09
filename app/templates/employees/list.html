@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}직원 목록{% endblock %}
+{% block content %}
+<h1>직원 목록</h1>
+<table class="employee-table">
+    <thead>
+        <tr>
+            <th>사번</th>
+            <th>이름</th>
+            <th>부서</th>
+            <th>직급</th>
+            <th>입사일</th>
+            <th>상태</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in employees %}
+        <tr>
+            <td>{{ employee.emp_no }}</td>
+            <td>{{ employee.emp_name }}</td>
+            <td>{{ employee.dept_name or "-" }}</td>
+            <td>{{ employee.position_name or "-" }}</td>
+            <td>{{ employee.hire_date }}</td>
+            <td>{{ employee.emp_status | status_badge }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6">등록된 직원이 없습니다.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

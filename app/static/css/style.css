@@ -1,0 +1,86 @@
+body {
+    font-family: -apple-system, "Segoe UI", sans-serif;
+    margin: 0;
+    color: #1a1a1a;
+    background: #f7f7f8;
+}
+
+.nav {
+    background: #1f2937;
+    padding: 0.75rem 1.5rem;
+}
+
+.nav a {
+    color: #f7f7f8;
+    text-decoration: none;
+    margin-right: 1rem;
+    font-weight: 600;
+}
+
+.container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.employee-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+}
+
+.employee-table th,
+.employee-table td {
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.badge-active {
+    background: #16a34a;
+}
+
+.badge-leave {
+    background: #d97706;
+}
+
+.badge-resigned {
+    background: #6b7280;
+}
+
+.employee-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-width: 480px;
+}
+
+.employee-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-weight: 600;
+}
+
+.employee-form input,
+.employee-form select {
+    font-weight: normal;
+    padding: 0.4rem;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+}
+
+.error {
+    color: #dc2626;
+    margin: 0;
+    font-size: 0.85rem;
+}

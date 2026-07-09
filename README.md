@@ -78,3 +78,18 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 - `.claude/skills/fastapi-service-architecture/SKILL.md` — 프로젝트 골격, DB 리플렉션 패턴, Router/Service 계층, Pydantic 검증 매핑표(스펙 §4), 상태 전이 패턴(F-04), 에러 응답 규격
 - `.claude/skills/jinja2-ssr-frontend/SKILL.md` — 템플릿 상속 구조, PRG(POST→303) 패턴, 상태 배지 커스텀 필터, autoescape/CSRF 트레이드오프
 - 기존 `backend-service-architecture`/`frontend-ssr` 스킬(Node.js/Express·Vanilla HTML 대상, 다른 프로젝트 템플릿)은 이 프로젝트 스택과 맞지 않아 대체용으로 신규 작성. 두 스킬 모두 이 세션에서 정상 로드되는 것으로 frontmatter description 확인 완료.
+
+### `ERP_employee_list_register` (Task 4 — F-01+F-02)
+
+- `app/schemas/{employee,department,position}.py` — `EmployeeCreate`(스펙 §4 검증), `EmployeeRead`, 드롭다운용 `DepartmentRead`/`PositionRead`
+- `app/services/{employee,department,position}_service.py` — 목록 조회(부서/직급 조인), 등록(부서/직급/관리자 존재 검증 + `emp_no` 중복 처리), 등록 시 상태는 서버가 `ACTIVE`로 강제
+- `app/routers/pages.py` — `GET/POST /employees/new`(PRG: 실패 시 폼 재표시, 성공 시 303 리다이렉트), `GET /employees`(목록)
+- `app/routers/api_{employees,departments,positions}.py` — 동일 서비스 로직을 공유하는 JSON API
+- `app/templating.py` — `status_badge` Jinja 필터(재직/휴직/퇴직 배지)
+- `app/templates/{base.html, partials/_nav.html, employees/{list,_form,register}.html}`, `app/static/css/style.css`
+- **실제 DB 연동 검증 완료** (WSL2 복구 후 `docker compose up -d` → `ddl/run_all.sql` → `uvicorn` 실제 기동):
+  - `GET /employees`, `GET /employees/new` 정상 렌더링, 등록 성공 시 303 → `/employees` 리다이렉트, 목록에 새 직원 즉시 반영
+  - 등록 시 `emp_status`가 클라이언트 입력과 무관하게 항상 `ACTIVE`로 저장되는 것 확인
+  - 검증 실패 케이스 3종 모두 422 + 폼 재표시 확인: 사번 중복(`emp_no` 유니크 제약 위반), 필수값(`hire_date`) 누락, 이메일 형식 오류
+  - 한글 직원명이 DB에 올바른 UTF-8로 저장되는 것을 `encode(...,'hex')`로 바이트 단위까지 확인
+- **버그 발견 및 수정**: 이 환경의 Starlette 버전이 `Jinja2Templates.TemplateResponse`의 시그니처를 `(name, {"request":...})`에서 `(request, name, context)`로 변경했음. 기존 방식으로 호출한 3곳(`pages.py`)이 500 에러를 냈고, 신버전 시그니처로 수정해 해결. **정적 검증(임포트/템플릿 더미 렌더링)만으로는 이 버그를 못 잡았음** — 실제 실행 검증이 필요했던 사례.
