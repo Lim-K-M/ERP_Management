@@ -35,15 +35,17 @@
 - `main`은 PR로만 반영, 직접 커밋 금지.
 - 브랜치명은 `ERP_<역할>` 컨벤션 사용 (예: `ERP_initial_setup`, `ERP_project_scaffold`). 현황은 `docs/internal/progress-checklist.md` 참고.
 
-## 로컬 실행 (DB)
+## 로컬 실행
 
 ```bash
-cp .env.example .env   # DB_PASSWORD, PGADMIN_PASSWORD 값 채우기
+cp .env.example .env   # DB_PASSWORD/PGADMIN_PASSWORD/APP_DB_PASSWORD 값 채우기
 docker compose up -d
 psql "postgresql://emko:${DB_PASSWORD}@localhost:5433/emko" -f ddl/run_all.sql
-```
 
-애플리케이션(FastAPI) 실행 방법은 `app/` 골격이 추가되는 대로 이 섹션에 갱신한다.
+python -m venv .venv && .venv/Scripts/activate   # Windows
+pip install -r requirements.txt
+uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
+```
 
 ## 진행 상황
 
@@ -61,3 +63,12 @@ psql "postgresql://emko:${DB_PASSWORD}@localhost:5433/emko" -f ddl/run_all.sql
 - 요구사항 스펙(`docs/specs/2026-07-08-employee-management-spec.md`), 구현 계획서(`docs/plans/2026-07-08-employee-management-plan.md`) 작성
 - git/GitHub 초기화(`.gitignore`로 `.env` 제외, origin 연결), 진행 체크리스트(`docs/internal/progress-checklist.md`) 추가
 - 코드 구현은 아직 없음 — 다음 브랜치(`ERP_project_scaffold`)부터 FastAPI 앱 골격 시작
+
+### `ERP_project_scaffold` (Task 2)
+
+- `app/main.py` — FastAPI 앱 + lifespan에서 DB 리플렉션 실행, `/healthz` 헬스체크
+- `app/config.py` — pydantic-settings로 `.env`의 `APP_DB_*` 읽어 `DATABASE_URL` 구성
+- `app/db/engine.py`, `app/db/session.py` — SQLAlchemy 2.x 비동기 엔진/세션
+- `app/db/metadata.py` — `MetaData().reflect(only=[...])`로 `t_department`/`t_position`/`t_employee`/`t_employment_history` 리플렉션
+- `requirements.txt` 작성
+- **알려진 트레이드오프**: 이 작업 환경에서 Docker Desktop이 WSL2 미설치(`REGDB_E_CLASSNOTREG`)로 기동되지 않아 `docker compose up` → `/healthz` 실제 DB 연동 검증은 못했음. `python -c "import app.main"`으로 문법·임포트 오류만 확인. Docker가 정상 동작하는 환경에서 반드시 재검증 필요.

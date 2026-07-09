@@ -24,8 +24,8 @@
 ## 참고 — 브랜치 현황
 | 브랜치 | 내용 | 상태 |
 |---|---|---|
-| `ERP_initial_setup` | 초기 자료(규칙/스킬/DDL/docker-compose/spec/plan) | push 완료, PR 대기 |
-| `ERP_project_scaffold` | FastAPI 프로젝트 골격 + DB 리플렉션 | 예정 |
+| `ERP_initial_setup` | 초기 자료(규칙/스킬/DDL/docker-compose/spec/plan) | 완료, main 병합 |
+| `ERP_project_scaffold` | FastAPI 프로젝트 골격 + DB 리플렉션 | 코드 완료 · DB 연동 검증 보류(로컬 Docker/WSL2 미가동, 개발 환경에서 별도 확인 필요) |
 | `ERP_skills_fastapi_jinja2` | 신규 스킬(fastapi-service-architecture, jinja2-ssr-frontend) | 예정 |
 | `ERP_employee_list_register` | F-01+F-02 (목록/등록) | 예정 |
 | `ERP_employee_detail_status` | F-03+F-04 (상세/상태변경) | 예정 |
