@@ -30,4 +30,6 @@
 | `ERP_employee_list_register` | F-01+F-02 (목록/등록) | 완료, 실제 DB로 검증 완료(TemplateResponse 버그 발견·수정 포함) |
 | `ERP_employee_detail_status` | F-03+F-04 (상세/상태변경) | 완료, 실제 DB로 검증 완료(404 처리 버그 발견·수정 포함) |
 | `ERP_employee_search_filter` | F-05 검색/필터 (선택) | 완료, 실제 DB로 검증 완료 (Task 5 UI 폴리싱 커밋도 이 브랜치로 cherry-pick해 포함) |
+| `ERP_data_integrity_review` | 데이터 무결성 리뷰 문서 | PR #8 리뷰 대기 |
+| `ERP_employee_integrity_and_sort` | 무결성 리뷰 반영(순환참조/레이스컨디션/퇴직자매니저/사번대소문자/부서필터빈값버그) + 목록 정렬(사번/이름/부서/직급/상태) | 완료, 실제 DB로 검증 완료 |
 | `ERP_employment_history` | 인사발령 이력 bonus (선택) | 예정 |

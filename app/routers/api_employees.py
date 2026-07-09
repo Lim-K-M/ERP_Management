@@ -5,6 +5,7 @@ from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, 
 from app.db.session import get_session
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeRead, EmployeeStatusUpdate, EmployeeUpdate
 from app.services import employee_service
+from app.services.employee_service import DEFAULT_SORT, SORT_COLUMNS
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
 
@@ -12,12 +13,18 @@ router = APIRouter(prefix="/api/employees", tags=["employees"])
 @router.get("", response_model=list[EmployeeRead])
 async def list_employees(
     name: str | None = None,
-    dept_id: int | None = None,
+    dept_id: str | None = None,
     status: str | None = None,
+    sort: str = DEFAULT_SORT,
+    order: str = "asc",
     session: AsyncSession = Depends(get_session),
 ):
+    if sort not in SORT_COLUMNS:
+        sort = DEFAULT_SORT
+    if order not in ("asc", "desc"):
+        order = "asc"
     filters = EmployeeFilter(name=name, dept_id=dept_id, status=status)
-    return await employee_service.list_employees(session, filters)
+    return await employee_service.list_employees(session, filters, sort=sort, order=order)
 
 
 @router.post("", response_model=EmployeeRead, status_code=201)

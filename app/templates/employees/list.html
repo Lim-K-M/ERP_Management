@@ -19,6 +19,8 @@
         <option value="LEAVE" {% if filters.status == "LEAVE" %}selected{% endif %}>휴직</option>
         <option value="RESIGNED" {% if filters.status == "RESIGNED" %}selected{% endif %}>퇴직</option>
     </select>
+    <input type="hidden" name="sort" value="{{ current_sort }}">
+    <input type="hidden" name="order" value="{{ current_order }}">
     <button type="submit" class="btn btn-outline">검색</button>
     <a href="/employees" class="btn btn-outline">초기화</a>
 </form>
@@ -26,12 +28,12 @@
     <table class="employee-table">
         <thead>
             <tr>
-                <th>사번</th>
-                <th>이름</th>
-                <th>부서</th>
-                <th>직급</th>
+                <th><a href="{{ sort_links.emp_no }}" class="sort-link">사번 <span class="sort-arrow {% if sort_state.emp_no %}sort-arrow-active{% endif %}">{% if sort_state.emp_no == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
+                <th><a href="{{ sort_links.emp_name }}" class="sort-link">이름 <span class="sort-arrow {% if sort_state.emp_name %}sort-arrow-active{% endif %}">{% if sort_state.emp_name == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
+                <th><a href="{{ sort_links.dept_name }}" class="sort-link">부서 <span class="sort-arrow {% if sort_state.dept_name %}sort-arrow-active{% endif %}">{% if sort_state.dept_name == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
+                <th><a href="{{ sort_links.position_name }}" class="sort-link">직급 <span class="sort-arrow {% if sort_state.position_name %}sort-arrow-active{% endif %}">{% if sort_state.position_name == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
                 <th>입사일</th>
-                <th>상태</th>
+                <th><a href="{{ sort_links.emp_status }}" class="sort-link">상태 <span class="sort-arrow {% if sort_state.emp_status %}sort-arrow-active{% endif %}">{% if sort_state.emp_status == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
             </tr>
         </thead>
         <tbody>
