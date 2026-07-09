@@ -131,3 +131,28 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
   - 이름 부분검색, 부서 필터, 상태 필터 각각 단독 동작 확인
   - 이름+상태 조합 필터 동작 확인 (결과 6건 전부 조건 일치)
   - HTML 목록 페이지에서 필터 적용 시 행 수가 DB의 실제 개수와 일치, `<select>`에 현재 필터값이 `selected`로 유지되는 것 확인
+
+### `ERP_employee_integrity_and_sort`
+
+`docs/internal/2026-07-09-data-integrity-review.md` 리뷰에서 발견한 항목을 반영하고, 목록에 정렬 기능을 추가.
+
+**데이터 무결성 수정**
+- `_validate_references`(`employee_service.py`) — 관리자 지정 시 (1) 대상이 `RESIGNED` 상태면 거부, (2) `_would_create_manager_cycle`로 매니저 체인을 따라 올라가 순환 참조가 생기면 거부
+- `change_status` — `SELECT` 후 `UPDATE`하던 방식에서, `WHERE emp_status = 현재값` 조건부 `UPDATE`로 변경(레이스 컨디션 방지). `rowcount == 0`이면 그 사이 상태가 바뀐 것으로 보고 409 처리
+- `EmployeeCreate`/`EmployeeUpdate`에 `emp_no` 대문자 정규화 validator 추가 — `e001`과 `E001`이 다른 사번으로 취급되던 문제 해결
+- `EmployeeStatusUpdate.emp_status`에 유효값(`ACTIVE`/`LEAVE`/`RESIGNED`) validator 추가 — 존재하지 않는 상태값을 보내면 409(전이 불가) 대신 422(값 자체가 잘못됨)로 명확히 구분
+- **버그 발견 및 수정**: 목록 검색바에서 "전체 부서"(빈 값) 선택 후 검색을 누르면 FastAPI가 빈 문자열을 `int`로 파싱하려다 422 에러를 냈음. `dept_id` 쿼리 파라미터를 문자열로 받아 `EmployeeFilter`의 `mode="before"` validator에서 빈 문자열을 `None`으로 변환하도록 수정
+
+**정렬 기능 (사번/이름/부서/직급/상태)**
+- `employee_service.list_employees`가 `sort`/`order` 파라미터를 받아 해당 컬럼으로 `ORDER BY` 적용
+- `GET /employees`, `GET /api/employees` 모두 `sort`/`order` 쿼리 파라미터 지원
+- `list.html` 테이블 헤더에 작은 삼각형(▲/▼) 정렬 버튼 추가 — 클릭 시 해당 컬럼으로 정렬하고 다시 누르면 오름차순/내림차순 토글, 현재 필터 조건을 유지한 채 정렬 링크 생성
+
+**실제 DB 연동 검증 완료**
+- 부서 필터 빈 값 검색 버그 재현 후 수정 확인(200)
+- `e001` 형태로 등록 시 `E001`로 저장, 대소문자만 다른 사번 재등록 시 422 확인
+- 순환 참조 시도(A→B, B→A) 422로 차단, 퇴직자를 매니저로 지정 시도 422로 차단 확인
+- 잘못된 상태값(`"FOO"`) 전송 시 422 확인(기존엔 409)
+- 이름/상태 컬럼 정렬 오름차순·내림차순 확인(DB 자체적으로 desc가 asc의 정확한 역순임을 확인)
+- 동시 요청 두 개로 상태변경 레이스 컨디션을 재현 시도했으나 두 요청이 순차적으로 처리되어(둘 다 유효한 전이) 실제 경합 상황은 못 만듦 — 조건부 UPDATE 로직 자체는 코드 리뷰로 원자성 확인
+- 검증 후 테스트로 등록한 직원 데이터는 전부 삭제(부서 5개·직급 5개 참고 데이터만 유지)

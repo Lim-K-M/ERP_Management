@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
@@ -8,6 +10,7 @@ from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, 
 from app.db.session import get_session
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
 from app.services import department_service, employee_service, position_service
+from app.services.employee_service import DEFAULT_SORT, SORT_COLUMNS
 from app.templating import templates
 
 router = APIRouter()
@@ -30,21 +33,48 @@ def _employee_form_fields(form) -> dict:
     }
 
 
+def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str, str], dict[str, str | None]]:
+    base_query = {k: v for k, v in request.query_params.items() if k not in ("sort", "order")}
+    links: dict[str, str] = {}
+    states: dict[str, str | None] = {}
+    for column in SORT_COLUMNS:
+        next_order = "desc" if sort == column and order == "asc" else "asc"
+        links[column] = "/employees?" + urlencode({**base_query, "sort": column, "order": next_order})
+        states[column] = order if sort == column else None
+    return links, states
+
+
 @router.get("/employees")
 async def employee_list_page(
     request: Request,
     name: str | None = None,
-    dept_id: int | None = None,
+    dept_id: str | None = None,
     status: str | None = None,
+    sort: str = DEFAULT_SORT,
+    order: str = "asc",
     session: AsyncSession = Depends(get_session),
 ):
+    if sort not in SORT_COLUMNS:
+        sort = DEFAULT_SORT
+    if order not in ("asc", "desc"):
+        order = "asc"
+
     filters = EmployeeFilter(name=name, dept_id=dept_id, status=status)
-    employees = await employee_service.list_employees(session, filters)
+    employees = await employee_service.list_employees(session, filters, sort=sort, order=order)
     departments = await department_service.list_departments(session)
+    sort_links, sort_state = _build_sort_links(request, sort, order)
     return templates.TemplateResponse(
         request,
         "employees/list.html",
-        {"employees": employees, "departments": departments, "filters": filters},
+        {
+            "employees": employees,
+            "departments": departments,
+            "filters": filters,
+            "sort_links": sort_links,
+            "sort_state": sort_state,
+            "current_sort": sort,
+            "current_order": order,
+        },
     )
 
 

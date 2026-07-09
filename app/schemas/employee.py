@@ -1,6 +1,8 @@
 from datetime import date
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.core.constants import ALLOWED_TRANSITIONS
 
 
 class EmployeeCreate(BaseModel):
@@ -13,6 +15,11 @@ class EmployeeCreate(BaseModel):
     position_id: int | None = None
     manager_id: int | None = None
 
+    @field_validator("emp_no")
+    @classmethod
+    def normalize_emp_no(cls, value: str) -> str:
+        return value.upper()
+
 
 class EmployeeUpdate(BaseModel):
     emp_no: str | None = Field(None, min_length=1, max_length=20)
@@ -24,15 +31,32 @@ class EmployeeUpdate(BaseModel):
     position_id: int | None = None
     manager_id: int | None = None
 
+    @field_validator("emp_no")
+    @classmethod
+    def normalize_emp_no(cls, value: str | None) -> str | None:
+        return value.upper() if value is not None else value
+
 
 class EmployeeStatusUpdate(BaseModel):
     emp_status: str
+
+    @field_validator("emp_status")
+    @classmethod
+    def validate_status_value(cls, value: str) -> str:
+        if value not in ALLOWED_TRANSITIONS:
+            raise ValueError(f"'{value}'는 유효한 상태값이 아닙니다. (ACTIVE/LEAVE/RESIGNED 중 하나)")
+        return value
 
 
 class EmployeeFilter(BaseModel):
     name: str | None = None
     dept_id: int | None = None
     status: str | None = None
+
+    @field_validator("dept_id", mode="before")
+    @classmethod
+    def blank_dept_id_to_none(cls, value):
+        return None if value == "" else value
 
 
 class EmployeeRead(BaseModel):

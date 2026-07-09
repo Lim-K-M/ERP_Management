@@ -7,6 +7,9 @@ from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, 
 from app.db.metadata import metadata
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
 
+SORT_COLUMNS = ("emp_no", "emp_name", "dept_name", "position_name", "emp_status")
+DEFAULT_SORT = "emp_no"
+
 
 def _employee_select():
     employee = metadata.tables["t_employee"]
@@ -33,8 +36,15 @@ def _employee_select():
     )
 
 
-async def list_employees(session: AsyncSession, filters: EmployeeFilter | None = None):
+async def list_employees(
+    session: AsyncSession,
+    filters: EmployeeFilter | None = None,
+    sort: str = DEFAULT_SORT,
+    order: str = "asc",
+):
     employee = metadata.tables["t_employee"]
+    department = metadata.tables["t_department"]
+    position = metadata.tables["t_position"]
     stmt = _employee_select()
 
     if filters is not None:
@@ -45,7 +55,16 @@ async def list_employees(session: AsyncSession, filters: EmployeeFilter | None =
         if filters.status:
             stmt = stmt.where(employee.c.emp_status == filters.status)
 
-    stmt = stmt.order_by(employee.c.emp_no)
+    sort_columns = {
+        "emp_no": employee.c.emp_no,
+        "emp_name": employee.c.emp_name,
+        "dept_name": department.c.dept_name,
+        "position_name": position.c.position_level,  # 이름 가나다순이 아니라 직급 서열 기준
+        "emp_status": employee.c.emp_status,
+    }
+    column = sort_columns.get(sort, employee.c.emp_no)
+    stmt = stmt.order_by(column.desc() if order == "desc" else column.asc())
+
     result = await session.execute(stmt)
     return result.mappings().all()
 
@@ -58,6 +77,24 @@ async def get_employee(session: AsyncSession, emp_id: int):
         return result.mappings().one()
     except NoResultFound as e:
         raise EmployeeNotFoundError(emp_id) from e
+
+
+async def _would_create_manager_cycle(session: AsyncSession, emp_id: int, manager_id: int) -> bool:
+    """manager_id를 emp_id의 매니저로 지정했을 때 순환 참조가 생기는지 확인한다.
+
+    manager_id부터 매니저 체인을 따라 올라가다 emp_id를 다시 만나면 순환이다.
+    """
+    employee = metadata.tables["t_employee"]
+    current: int | None = manager_id
+    visited: set[int] = set()
+    while current is not None:
+        if current == emp_id:
+            return True
+        if current in visited:
+            break  # 기존에 이미 형성된 별개의 순환 - 무한루프 방지용
+        visited.add(current)
+        current = await session.scalar(select(employee.c.manager_id).where(employee.c.emp_id == current))
+    return False
 
 
 async def _validate_references(
@@ -88,9 +125,15 @@ async def _validate_references(
         if emp_id is not None and manager_id == emp_id:
             errors["manager_id"] = "자기 자신을 관리자로 지정할 수 없습니다."
         else:
-            exists = await session.scalar(select(employee.c.emp_id).where(employee.c.emp_id == manager_id))
-            if exists is None:
+            manager_status = await session.scalar(
+                select(employee.c.emp_status).where(employee.c.emp_id == manager_id)
+            )
+            if manager_status is None:
                 errors["manager_id"] = "존재하지 않는 관리자입니다."
+            elif manager_status == "RESIGNED":
+                errors["manager_id"] = "퇴직한 직원은 관리자로 지정할 수 없습니다."
+            elif emp_id is not None and await _would_create_manager_cycle(session, emp_id, manager_id):
+                errors["manager_id"] = "관리자 지정이 순환 참조를 만듭니다."
 
     return errors
 
@@ -167,6 +210,16 @@ async def change_status(session: AsyncSession, emp_id: int, target_status: str) 
     if target_status not in ALLOWED_TRANSITIONS.get(current_status, set()):
         raise InvalidTransitionError(current_status, target_status)
 
-    stmt = update(employee).where(employee.c.emp_id == emp_id).values(emp_status=target_status)
-    await session.execute(stmt)
+    # 현재 상태를 조건으로 거는 조건부 UPDATE — SELECT와 UPDATE 사이에 다른 요청이
+    # 먼저 상태를 바꿔버리는 레이스 컨디션에서 조용히 덮어쓰지 않고 실패시킨다.
+    stmt = (
+        update(employee)
+        .where(employee.c.emp_id == emp_id, employee.c.emp_status == current_status)
+        .values(emp_status=target_status)
+    )
+    result = await session.execute(stmt)
+    if result.rowcount == 0:
+        await session.rollback()
+        raise InvalidTransitionError(current_status, target_status)
+
     await session.commit()
