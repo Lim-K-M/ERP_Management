@@ -17,7 +17,7 @@
 - [x] PostgreSQL에 실제로 저장된다 — WSL2 복구 후 `docker compose up` + `uvicorn` 실행, 한글 포함 정상 저장 확인(F-01~F-04 범위)
 
 ## 검증
-- [x] 로컬에서 실행해 브라우저로 동작 확인 — F-01~F-04(목록/등록/상세/상태변경) 범위까지. F-05/bonus는 구현 후 재확인 필요
+- [x] 로컬에서 실행해 브라우저로 동작 확인 — F-01~F-05(검색/필터 포함) 범위까지. bonus(인사발령 이력)는 구현 후 재확인 필요
 - [ ] 요구사항 정의서 항목과 대조
 - [ ] 산출물 정리 — 결과화면 · AI 활용 · 만든 스킬
 
@@ -29,5 +29,5 @@
 | `ERP_skills_fastapi_jinja2` | 신규 스킬(fastapi-service-architecture, jinja2-ssr-frontend) | 완료, main 병합 |
 | `ERP_employee_list_register` | F-01+F-02 (목록/등록) | 완료, 실제 DB로 검증 완료(TemplateResponse 버그 발견·수정 포함) |
 | `ERP_employee_detail_status` | F-03+F-04 (상세/상태변경) | 완료, 실제 DB로 검증 완료(404 처리 버그 발견·수정 포함) |
-| `ERP_employee_search_filter` | F-05 검색/필터 (선택) | 예정 |
+| `ERP_employee_search_filter` | F-05 검색/필터 (선택) | 완료, 실제 DB로 검증 완료 (Task 5 UI 폴리싱 커밋도 이 브랜치로 cherry-pick해 포함) |
 | `ERP_employment_history` | 인사발령 이력 bonus (선택) | 예정 |

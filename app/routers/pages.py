@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.constants import next_allowed_statuses
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
-from app.schemas.employee import EmployeeCreate, EmployeeUpdate
+from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
 from app.services import department_service, employee_service, position_service
 from app.templating import templates
 
@@ -31,9 +31,21 @@ def _employee_form_fields(form) -> dict:
 
 
 @router.get("/employees")
-async def employee_list_page(request: Request, session: AsyncSession = Depends(get_session)):
-    employees = await employee_service.list_employees(session)
-    return templates.TemplateResponse(request, "employees/list.html", {"employees": employees})
+async def employee_list_page(
+    request: Request,
+    name: str | None = None,
+    dept_id: int | None = None,
+    status: str | None = None,
+    session: AsyncSession = Depends(get_session),
+):
+    filters = EmployeeFilter(name=name, dept_id=dept_id, status=status)
+    employees = await employee_service.list_employees(session, filters)
+    departments = await department_service.list_departments(session)
+    return templates.TemplateResponse(
+        request,
+        "employees/list.html",
+        {"employees": employees, "departments": departments, "filters": filters},
+    )
 
 
 @router.get("/employees/new")

@@ -29,6 +29,12 @@ class EmployeeStatusUpdate(BaseModel):
     emp_status: str
 
 
+class EmployeeFilter(BaseModel):
+    name: str | None = None
+    dept_id: int | None = None
+    status: str | None = None
+
+
 class EmployeeRead(BaseModel):
     emp_id: int
     emp_no: str
