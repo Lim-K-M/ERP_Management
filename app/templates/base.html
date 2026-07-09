@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}직원관리{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    {% include "partials/_nav.html" %}
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

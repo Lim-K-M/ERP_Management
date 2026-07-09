@@ -72,3 +72,13 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 - `app/db/metadata.py` — `MetaData().reflect(only=[...])`로 `t_department`/`t_position`/`t_employee`/`t_employment_history` 리플렉션
 - `requirements.txt` 작성
 - **알려진 트레이드오프**: 이 작업 환경에서 Docker Desktop이 WSL2 미설치(`REGDB_E_CLASSNOTREG`)로 기동되지 않아 `docker compose up` → `/healthz` 실제 DB 연동 검증은 못했음. `python -c "import app.main"`으로 문법·임포트 오류만 확인. Docker가 정상 동작하는 환경에서 반드시 재검증 필요.
+
+### `ERP_employee_list_register` (Task 4 — F-01+F-02)
+
+- `app/schemas/{employee,department,position}.py` — `EmployeeCreate`(스펙 §4 검증), `EmployeeRead`, 드롭다운용 `DepartmentRead`/`PositionRead`
+- `app/services/{employee,department,position}_service.py` — 목록 조회(부서/직급 조인), 등록(부서/직급/관리자 존재 검증 + `emp_no` 중복 처리), 등록 시 상태는 서버가 `ACTIVE`로 강제
+- `app/routers/pages.py` — `GET/POST /employees/new`(PRG: 실패 시 폼 재표시, 성공 시 303 리다이렉트), `GET /employees`(목록)
+- `app/routers/api_{employees,departments,positions}.py` — 동일 서비스 로직을 공유하는 JSON API
+- `app/templating.py` — `status_badge` Jinja 필터(재직/휴직/퇴직 배지)
+- `app/templates/{base.html, partials/_nav.html, employees/{list,_form,register}.html}`, `app/static/css/style.css`
+- **알려진 트레이드오프**: Docker/DB 미가동으로 실제 등록→목록 반영, 중복 사번 저장 실패 등 브라우저 시나리오는 검증하지 못했음. 대신 (1) OpenAPI 스키마 생성으로 라우트 등록 확인, (2) 템플릿을 더미 데이터로 직접 렌더링해 Jinja 문법 확인, (3) `EmployeeCreate` 스키마 단위 검증(정상값/이메일 형식 오류/빈 문자열 거부)까지 확인. **Docker가 되는 환경에서 등록→목록 반영, 필수값 누락/사번 중복 실패를 브라우저로 재검증 필요.**
