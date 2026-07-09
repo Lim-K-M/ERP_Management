@@ -14,7 +14,9 @@ router = APIRouter(prefix="/api/employees", tags=["employees"])
 async def list_employees(
     name: str | None = None,
     dept_id: str | None = None,
+    position_id: str | None = None,
     status: str | None = None,
+    hire_year: str | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
     session: AsyncSession = Depends(get_session),
@@ -23,7 +25,7 @@ async def list_employees(
         sort = DEFAULT_SORT
     if order not in ("asc", "desc"):
         order = "asc"
-    filters = EmployeeFilter(name=name, dept_id=dept_id, status=status)
+    filters = EmployeeFilter(name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year)
     return await employee_service.list_employees(session, filters, sort=sort, order=order)
 
 
