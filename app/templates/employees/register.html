@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 {% block title %}직원 등록{% endblock %}
 {% block content %}
-<h1>직원 등록</h1>
-{% include "employees/_form.html" %}
+<div class="page-header">
+    <div>
+        <a href="/employees" class="breadcrumb">&larr; 직원 목록</a>
+        <h1>직원 등록</h1>
+    </div>
+</div>
+<div class="card">
+    {% include "employees/_form.html" %}
+</div>
 {% endblock %}

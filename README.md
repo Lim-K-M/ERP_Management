@@ -108,3 +108,13 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
   - `RESIGNED` 상태에서 상세 페이지에 전이 버튼이 하나도 노출되지 않음(터미널 상태) 확인
   - `RESIGNED → ACTIVE`처럼 허용되지 않는 전이를 JSON API로 직접 시도 시 409 확인
   - 정보 수정(전화번호 등 부분 수정) 반영 확인, 자기 자신을 관리자로 지정 시 422 확인
+
+### UI 폴리싱 (F-05/bonus 착수 전)
+
+- `app/static/css/style.css` — CSS 커스텀 프로퍼티(색상/간격 토큰)로 재작성, `.btn`/`.card`/`.page-header`/`.table-wrap`/`.employee-form .field` 등 재사용 가능한 컴포넌트 클래스 도입. 새 화면(검색바, 인사발령 이력 등)을 추가할 때 이 토큰·클래스를 그대로 재사용하도록 설계
+- `base.html`/`_nav.html` — 상단 내비게이션에 브랜드 표시 추가
+- `list.html` — 페이지 헤더(제목 + "직원 등록" 버튼) + 테이블을 카드로 감쌈, 빈 목록 상태 스타일링
+- `register.html`/`detail.html` — 목록으로 돌아가는 브레드크럼, 폼을 카드로 감쌈
+- `_form.html` — `<label>`+`<input>`을 `.field` 단위로 재구성해 2열 그리드 레이아웃(모바일에서는 1열)으로 정리, 필드별 에러 메시지 위치 통일
+- `detail.html` — 상태 변경 버튼에 상태별 색상(재직=success outline, 휴직=warning outline, 퇴직=danger outline) 적용
+- 실제 브라우저 기준으로 목록/등록/상세 페이지 전부 200 확인, 새로 등록한 직원의 상세 페이지에서 색상이 적용된 상태 변경 버튼이 정상 렌더링되는 것까지 확인 후 테스트 데이터 정리

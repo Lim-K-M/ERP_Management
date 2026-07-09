@@ -1,19 +1,28 @@
 {% extends "base.html" %}
 {% block title %}직원 상세 — {{ employee.emp_name }}{% endblock %}
 {% block content %}
-<h1>{{ employee.emp_name }} ({{ employee.emp_no }}) {{ employee.emp_status | status_badge }}</h1>
+<div class="page-header">
+    <div>
+        <a href="/employees" class="breadcrumb">&larr; 직원 목록</a>
+        <h1>{{ employee.emp_name }} ({{ employee.emp_no }}) {{ employee.emp_status | status_badge }}</h1>
+    </div>
+</div>
 
-<section class="status-actions">
+<div class="status-actions">
     {% for status in next_statuses %}
     <form method="post" action="/employees/{{ employee.emp_id }}/status" class="status-form">
         <input type="hidden" name="emp_status" value="{{ status }}">
-        <button type="submit">{{ status | status_badge }}로 변경</button>
+        <button type="submit" class="btn {% if status == 'ACTIVE' %}btn-outline-success{% elif status == 'LEAVE' %}btn-outline-warning{% else %}btn-outline-danger{% endif %}">
+            {{ status | status_badge }}로 변경
+        </button>
     </form>
     {% else %}
-    <p>더 이상 상태를 변경할 수 없습니다.</p>
+    <p class="muted">더 이상 상태를 변경할 수 없습니다.</p>
     {% endfor %}
-</section>
+</div>
 
-<h2>정보 수정</h2>
-{% include "employees/_form.html" %}
+<div class="card">
+    <h2>정보 수정</h2>
+    {% include "employees/_form.html" %}
+</div>
 {% endblock %}

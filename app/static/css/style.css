@@ -1,86 +1,310 @@
-body {
-    font-family: -apple-system, "Segoe UI", sans-serif;
-    margin: 0;
-    color: #1a1a1a;
-    background: #f7f7f8;
+/* ---- 디자인 토큰 ----
+   새 화면/기능(검색바, 인사발령 이력 등)을 추가할 때도 색상·간격을 직접
+   하드코딩하지 말고 이 변수들을 재사용한다. */
+:root {
+    --color-bg: #f4f5f7;
+    --color-surface: #ffffff;
+    --color-border: #e2e5ea;
+    --color-text: #1a1d23;
+    --color-text-muted: #6b7280;
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-danger: #dc2626;
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-neutral: #6b7280;
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
+
+    --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 1px rgba(16, 24, 40, 0.04);
 }
 
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
+    margin: 0;
+    color: var(--color-text);
+    background: var(--color-bg);
+    line-height: 1.5;
+}
+
+a {
+    color: var(--color-primary);
+}
+
+h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+h2 {
+    font-size: 1.1rem;
+    margin: 0 0 var(--space-3);
+}
+
+/* ---- 상단 내비게이션 ---- */
 .nav {
     background: #1f2937;
-    padding: 0.75rem 1.5rem;
+    padding: var(--space-3) var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.nav-brand {
+    color: #fff;
+    font-weight: 700;
+    margin-right: var(--space-4);
 }
 
 .nav a {
-    color: #f7f7f8;
+    color: #d1d5db;
     text-decoration: none;
-    margin-right: 1rem;
     font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.nav a:hover {
+    color: #fff;
 }
 
 .container {
-    max-width: 960px;
+    max-width: 1040px;
     margin: 0 auto;
-    padding: 1.5rem;
+    padding: var(--space-6);
 }
 
+/* ---- 공용 레이아웃 조각: 새 화면에서도 그대로 재사용 ---- */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+    flex-wrap: wrap;
+}
+
+.page-header .breadcrumb {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+    margin-bottom: var(--space-1);
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+}
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    padding: var(--space-6);
+}
+
+.table-wrap {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    overflow-x: auto;
+}
+
+/* ---- 버튼: 색만 바꿔서 재사용 (btn-outline-success 등) ---- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-hover);
+}
+
+.btn-outline {
+    border-color: var(--color-border);
+    color: var(--color-text);
+    background: var(--color-surface);
+}
+
+.btn-outline:hover {
+    background: var(--color-bg);
+}
+
+.btn-outline-success {
+    border-color: var(--color-success);
+    color: var(--color-success);
+    background: var(--color-surface);
+}
+
+.btn-outline-warning {
+    border-color: var(--color-warning);
+    color: var(--color-warning);
+    background: var(--color-surface);
+}
+
+.btn-outline-danger {
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+    background: var(--color-surface);
+}
+
+/* ---- 테이블 ---- */
 .employee-table {
     width: 100%;
     border-collapse: collapse;
-    background: #fff;
 }
 
 .employee-table th,
 .employee-table td {
-    border: 1px solid #e5e7eb;
-    padding: 0.5rem 0.75rem;
+    padding: 0.65rem var(--space-4);
     text-align: left;
+    border-bottom: 1px solid var(--color-border);
 }
 
+.employee-table th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
+}
+
+.employee-table tbody tr:hover {
+    background: var(--color-bg);
+}
+
+.employee-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.empty-state {
+    color: var(--color-text-muted);
+    text-align: center;
+    padding: var(--space-8) !important;
+}
+
+/* ---- 상태 배지 ---- */
 .badge {
     display: inline-block;
     padding: 0.15rem 0.6rem;
     border-radius: 999px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: #fff;
 }
 
 .badge-active {
-    background: #16a34a;
+    background: var(--color-success);
 }
 
 .badge-leave {
-    background: #d97706;
+    background: var(--color-warning);
 }
 
 .badge-resigned {
-    background: #6b7280;
+    background: var(--color-neutral);
 }
 
+/* ---- 폼: 필드 하나 = .field, 새 필드 추가 시 이 구조만 반복 ---- */
 .employee-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4) var(--space-6);
+}
+
+.employee-form .field {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    max-width: 480px;
+    gap: var(--space-1);
+}
+
+.employee-form .field-wide {
+    grid-column: 1 / -1;
 }
 
 .employee-form label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
     font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .employee-form input,
 .employee-form select {
     font-weight: normal;
-    padding: 0.4rem;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+}
+
+.employee-form input:focus,
+.employee-form select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
+.employee-form .form-actions {
+    grid-column: 1 / -1;
+    margin-top: var(--space-2);
 }
 
 .error {
-    color: #dc2626;
+    color: var(--color-danger);
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+}
+
+.muted {
+    color: var(--color-text-muted);
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ---- 상태 변경 버튼 그룹 ---- */
+.status-actions {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: var(--space-6);
+}
+
+.status-form {
+    display: inline-block;
+}
+
+@media (max-width: 640px) {
+    .employee-form {
+        grid-template-columns: 1fr;
+    }
 }
