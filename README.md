@@ -73,6 +73,12 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 - `requirements.txt` 작성
 - **알려진 트레이드오프**: 이 작업 환경에서 Docker Desktop이 WSL2 미설치(`REGDB_E_CLASSNOTREG`)로 기동되지 않아 `docker compose up` → `/healthz` 실제 DB 연동 검증은 못했음. `python -c "import app.main"`으로 문법·임포트 오류만 확인. Docker가 정상 동작하는 환경에서 반드시 재검증 필요.
 
+### `ERP_skills_fastapi_jinja2` (Task 3)
+
+- `.claude/skills/fastapi-service-architecture/SKILL.md` — 프로젝트 골격, DB 리플렉션 패턴, Router/Service 계층, Pydantic 검증 매핑표(스펙 §4), 상태 전이 패턴(F-04), 에러 응답 규격
+- `.claude/skills/jinja2-ssr-frontend/SKILL.md` — 템플릿 상속 구조, PRG(POST→303) 패턴, 상태 배지 커스텀 필터, autoescape/CSRF 트레이드오프
+- 기존 `backend-service-architecture`/`frontend-ssr` 스킬(Node.js/Express·Vanilla HTML 대상, 다른 프로젝트 템플릿)은 이 프로젝트 스택과 맞지 않아 대체용으로 신규 작성. 두 스킬 모두 이 세션에서 정상 로드되는 것으로 frontmatter description 확인 완료.
+
 ### `ERP_employee_list_register` (Task 4 — F-01+F-02)
 
 - `app/schemas/{employee,department,position}.py` — `EmployeeCreate`(스펙 §4 검증), `EmployeeRead`, 드롭다운용 `DepartmentRead`/`PositionRead`
