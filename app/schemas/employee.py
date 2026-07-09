@@ -51,11 +51,13 @@ class EmployeeStatusUpdate(BaseModel):
 class EmployeeFilter(BaseModel):
     name: str | None = None
     dept_id: int | None = None
+    position_id: int | None = None
     status: str | None = None
+    hire_year: int | None = None
 
-    @field_validator("dept_id", mode="before")
+    @field_validator("dept_id", "position_id", "hire_year", mode="before")
     @classmethod
-    def blank_dept_id_to_none(cls, value):
+    def blank_to_none(cls, value):
         return None if value == "" else value
 
 

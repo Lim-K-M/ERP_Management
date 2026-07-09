@@ -1,4 +1,4 @@
-from sqlalchemy import insert, select, update
+from sqlalchemy import extract, insert, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,8 +52,12 @@ async def list_employees(
             stmt = stmt.where(employee.c.emp_name.ilike(f"%{filters.name}%"))
         if filters.dept_id is not None:
             stmt = stmt.where(employee.c.dept_id == filters.dept_id)
+        if filters.position_id is not None:
+            stmt = stmt.where(employee.c.position_id == filters.position_id)
         if filters.status:
             stmt = stmt.where(employee.c.emp_status == filters.status)
+        if filters.hire_year is not None:
+            stmt = stmt.where(extract("year", employee.c.hire_date) == filters.hire_year)
 
     sort_columns = {
         "emp_no": employee.c.emp_no,
@@ -67,6 +71,14 @@ async def list_employees(
 
     result = await session.execute(stmt)
     return result.mappings().all()
+
+
+async def list_hire_years(session: AsyncSession) -> list[int]:
+    employee = metadata.tables["t_employee"]
+    year_col = extract("year", employee.c.hire_date)
+    stmt = select(year_col.label("year")).distinct().order_by(year_col.desc())
+    result = await session.execute(stmt)
+    return [int(row.year) for row in result]
 
 
 async def get_employee(session: AsyncSession, emp_id: int):
