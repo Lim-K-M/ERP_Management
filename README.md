@@ -93,3 +93,18 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
   - 검증 실패 케이스 3종 모두 422 + 폼 재표시 확인: 사번 중복(`emp_no` 유니크 제약 위반), 필수값(`hire_date`) 누락, 이메일 형식 오류
   - 한글 직원명이 DB에 올바른 UTF-8로 저장되는 것을 `encode(...,'hex')`로 바이트 단위까지 확인
 - **버그 발견 및 수정**: 이 환경의 Starlette 버전이 `Jinja2Templates.TemplateResponse`의 시그니처를 `(name, {"request":...})`에서 `(request, name, context)`로 변경했음. 기존 방식으로 호출한 3곳(`pages.py`)이 500 에러를 냈고, 신버전 시그니처로 수정해 해결. **정적 검증(임포트/템플릿 더미 렌더링)만으로는 이 버그를 못 잡았음** — 실제 실행 검증이 필요했던 사례.
+
+### `ERP_employee_detail_status` (Task 5 — F-03+F-04)
+
+- `app/core/constants.py` — `ALLOWED_TRANSITIONS`(스펙 §2 전이 규칙) 단일 소스, `next_allowed_statuses()`
+- `app/core/exceptions.py` — `EmployeeValidationError`/`EmployeeNotFoundError`/`InvalidTransitionError` (기존 `employee_service.py`에 있던 예외를 이곳으로 정리)
+- `app/services/employee_service.py`(확장) — `get_employee`(404), `update_employee`(부분 수정, 부서/직급/관리자 존재 확인 + 자기 자신 관리자 지정 금지), `change_status`(허용된 전이만 반영, 아니면 409)
+- `app/routers/api_employees.py`(확장) — `GET/PATCH /api/employees/{id}`, `PATCH /api/employees/{id}/status`(허용 안 되는 전이 시 409)
+- `app/routers/pages.py`(확장) — `GET/POST /employees/{id}`(상세·수정, PRG), `POST /employees/{id}/status`
+- `app/templates/employees/detail.html` — 상세 정보 + 현재 상태에서 허용되는 다음 상태만 버튼으로 노출 + `_form.html` 재사용한 수정 폼. `list.html`에 상세 페이지 링크 추가
+- **실제 DB 연동 검증 완료**:
+  - 존재하지 않는 `emp_id` 조회 시 404 (최초 500이 나던 버그를 발견해 `pages.py`에 404 처리 추가)
+  - `ACTIVE → LEAVE → ACTIVE → RESIGNED` 전이 사이클 정상 동작, 목록/상세 배지 즉시 반영
+  - `RESIGNED` 상태에서 상세 페이지에 전이 버튼이 하나도 노출되지 않음(터미널 상태) 확인
+  - `RESIGNED → ACTIVE`처럼 허용되지 않는 전이를 JSON API로 직접 시도 시 409 확인
+  - 정보 수정(전화번호 등 부분 수정) 반영 확인, 자기 자신을 관리자로 지정 시 422 확인

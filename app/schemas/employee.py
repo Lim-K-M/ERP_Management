@@ -14,6 +14,21 @@ class EmployeeCreate(BaseModel):
     manager_id: int | None = None
 
 
+class EmployeeUpdate(BaseModel):
+    emp_no: str | None = Field(None, min_length=1, max_length=20)
+    emp_name: str | None = Field(None, min_length=1, max_length=100)
+    email: EmailStr | None = Field(None, max_length=255)
+    phone: str | None = Field(None, max_length=20)
+    hire_date: date | None = None
+    dept_id: int | None = None
+    position_id: int | None = None
+    manager_id: int | None = None
+
+
+class EmployeeStatusUpdate(BaseModel):
+    emp_status: str
+
+
 class EmployeeRead(BaseModel):
     emp_id: int
     emp_no: str

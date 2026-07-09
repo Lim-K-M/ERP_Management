@@ -16,7 +16,7 @@
     <tbody>
         {% for employee in employees %}
         <tr>
-            <td>{{ employee.emp_no }}</td>
+            <td><a href="/employees/{{ employee.emp_id }}">{{ employee.emp_no }}</a></td>
             <td>{{ employee.emp_name }}</td>
             <td>{{ employee.dept_name or "-" }}</td>
             <td>{{ employee.position_name or "-" }}</td>

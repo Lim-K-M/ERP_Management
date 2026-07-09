@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
-from app.schemas.employee import EmployeeCreate, EmployeeRead
+from app.schemas.employee import EmployeeCreate, EmployeeRead, EmployeeStatusUpdate, EmployeeUpdate
 from app.services import employee_service
-from app.services.employee_service import EmployeeValidationError
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
 
@@ -20,4 +20,34 @@ async def create_employee(payload: EmployeeCreate, session: AsyncSession = Depen
         emp_id = await employee_service.create_employee(session, payload)
     except EmployeeValidationError as e:
         raise HTTPException(status_code=422, detail=e.errors) from e
+    return await employee_service.get_employee(session, emp_id)
+
+
+@router.get("/{emp_id}", response_model=EmployeeRead)
+async def get_employee(emp_id: int, session: AsyncSession = Depends(get_session)):
+    try:
+        return await employee_service.get_employee(session, emp_id)
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다.") from e
+
+
+@router.patch("/{emp_id}", response_model=EmployeeRead)
+async def update_employee(emp_id: int, payload: EmployeeUpdate, session: AsyncSession = Depends(get_session)):
+    try:
+        await employee_service.update_employee(session, emp_id, payload)
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다.") from e
+    except EmployeeValidationError as e:
+        raise HTTPException(status_code=422, detail=e.errors) from e
+    return await employee_service.get_employee(session, emp_id)
+
+
+@router.patch("/{emp_id}/status", response_model=EmployeeRead)
+async def change_status(emp_id: int, payload: EmployeeStatusUpdate, session: AsyncSession = Depends(get_session)):
+    try:
+        await employee_service.change_status(session, emp_id, payload.emp_status)
+    except EmployeeNotFoundError as e:
+        raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다.") from e
+    except InvalidTransitionError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
     return await employee_service.get_employee(session, emp_id)
