@@ -19,7 +19,7 @@ def _optional_int(value: str | None) -> int | None:
 @router.get("/employees")
 async def employee_list_page(request: Request, session: AsyncSession = Depends(get_session)):
     employees = await employee_service.list_employees(session)
-    return templates.TemplateResponse("employees/list.html", {"request": request, "employees": employees})
+    return templates.TemplateResponse(request, "employees/list.html", {"employees": employees})
 
 
 @router.get("/employees/new")
@@ -27,8 +27,9 @@ async def employee_register_page(request: Request, session: AsyncSession = Depen
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
     return templates.TemplateResponse(
+        request,
         "employees/register.html",
-        {"request": request, "departments": departments, "positions": positions, "errors": {}, "form": {}},
+        {"departments": departments, "positions": positions, "errors": {}, "form": {}},
     )
 
 
@@ -52,8 +53,9 @@ async def employee_register_submit(request: Request, session: AsyncSession = Dep
     except ValidationError as e:
         errors = {str(err["loc"][0]): err["msg"] for err in e.errors()}
         return templates.TemplateResponse(
+            request,
             "employees/register.html",
-            {"request": request, "departments": departments, "positions": positions, "errors": errors, "form": form},
+            {"departments": departments, "positions": positions, "errors": errors, "form": form},
             status_code=422,
         )
 
@@ -61,8 +63,9 @@ async def employee_register_submit(request: Request, session: AsyncSession = Dep
         await employee_service.create_employee(session, payload)
     except EmployeeValidationError as e:
         return templates.TemplateResponse(
+            request,
             "employees/register.html",
-            {"request": request, "departments": departments, "positions": positions, "errors": e.errors, "form": form},
+            {"departments": departments, "positions": positions, "errors": e.errors, "form": form},
             status_code=422,
         )
 

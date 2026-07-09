@@ -10,14 +10,14 @@
 - [ ] 커밋을 의미 단위로 나눴다 — 각 브랜치 작업 중 계속 확인
 
 ## 기능 완성
-- [x] 목록에 주요 필드 + 상태가 함께 보인다 (F-01) — 코드 완료, 브라우저 검증은 Docker 미가동으로 보류
-- [x] 등록 validation 동작 (본인 ERD 규칙대로) (F-02) — 코드 완료, 브라우저 검증은 Docker 미가동으로 보류
+- [x] 목록에 주요 필드 + 상태가 함께 보인다 (F-01) — 실제 DB로 검증 완료
+- [x] 등록 validation 동작 (본인 ERD 규칙대로) (F-02) — 실제 DB로 검증 완료(사번 중복/필수값 누락/이메일 형식 오류 422 확인)
 - [ ] 상세·수정이 된다 (F-03)
 - [ ] 재직·휴직·퇴직 변경 시 배지가 바뀐다 (F-04)
-- [ ] PostgreSQL에 실제로 저장된다 — 실제 DB 연동은 아직 미검증(Docker/WSL2 이슈, README 참고)
+- [x] PostgreSQL에 실제로 저장된다 — WSL2 복구 후 `docker compose up` + `uvicorn` 실행, 한글 포함 정상 저장 확인(F-01/F-02 범위)
 
 ## 검증
-- [ ] 로컬에서 실행해 브라우저로 동작 확인
+- [x] 로컬에서 실행해 브라우저로 동작 확인 — F-01/F-02(목록/등록) 범위까지. F-03~F-05/bonus는 구현 후 재확인 필요
 - [ ] 요구사항 정의서 항목과 대조
 - [ ] 산출물 정리 — 결과화면 · AI 활용 · 만든 스킬
 
@@ -25,9 +25,9 @@
 | 브랜치 | 내용 | 상태 |
 |---|---|---|
 | `ERP_initial_setup` | 초기 자료(규칙/스킬/DDL/docker-compose/spec/plan) | 완료, main 병합 |
-| `ERP_project_scaffold` | FastAPI 프로젝트 골격 + DB 리플렉션 | 코드 완료 · DB 연동 검증 보류(로컬 Docker/WSL2 미가동, 개발 환경에서 별도 확인 필요) |
+| `ERP_project_scaffold` | FastAPI 프로젝트 골격 + DB 리플렉션 | 완료, main 병합. `/healthz` 실제 DB 리플렉션까지 검증 완료(WSL2 복구 후) |
 | `ERP_skills_fastapi_jinja2` | 신규 스킬(fastapi-service-architecture, jinja2-ssr-frontend) | PR #4 리뷰 대기 |
-| `ERP_employee_list_register` | F-01+F-02 (목록/등록) | 코드 완료 · DB 연동 검증 보류 |
+| `ERP_employee_list_register` | F-01+F-02 (목록/등록) | 완료, 실제 DB로 검증 완료(TemplateResponse 버그 발견·수정 포함) |
 | `ERP_employee_detail_status` | F-03+F-04 (상세/상태변경) | 예정 |
 | `ERP_employee_search_filter` | F-05 검색/필터 (선택) | 예정 |
 | `ERP_employment_history` | 인사발령 이력 bonus (선택) | 예정 |

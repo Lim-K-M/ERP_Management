@@ -81,4 +81,9 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 - `app/routers/api_{employees,departments,positions}.py` — 동일 서비스 로직을 공유하는 JSON API
 - `app/templating.py` — `status_badge` Jinja 필터(재직/휴직/퇴직 배지)
 - `app/templates/{base.html, partials/_nav.html, employees/{list,_form,register}.html}`, `app/static/css/style.css`
-- **알려진 트레이드오프**: Docker/DB 미가동으로 실제 등록→목록 반영, 중복 사번 저장 실패 등 브라우저 시나리오는 검증하지 못했음. 대신 (1) OpenAPI 스키마 생성으로 라우트 등록 확인, (2) 템플릿을 더미 데이터로 직접 렌더링해 Jinja 문법 확인, (3) `EmployeeCreate` 스키마 단위 검증(정상값/이메일 형식 오류/빈 문자열 거부)까지 확인. **Docker가 되는 환경에서 등록→목록 반영, 필수값 누락/사번 중복 실패를 브라우저로 재검증 필요.**
+- **실제 DB 연동 검증 완료** (WSL2 복구 후 `docker compose up -d` → `ddl/run_all.sql` → `uvicorn` 실제 기동):
+  - `GET /employees`, `GET /employees/new` 정상 렌더링, 등록 성공 시 303 → `/employees` 리다이렉트, 목록에 새 직원 즉시 반영
+  - 등록 시 `emp_status`가 클라이언트 입력과 무관하게 항상 `ACTIVE`로 저장되는 것 확인
+  - 검증 실패 케이스 3종 모두 422 + 폼 재표시 확인: 사번 중복(`emp_no` 유니크 제약 위반), 필수값(`hire_date`) 누락, 이메일 형식 오류
+  - 한글 직원명이 DB에 올바른 UTF-8로 저장되는 것을 `encode(...,'hex')`로 바이트 단위까지 확인
+- **버그 발견 및 수정**: 이 환경의 Starlette 버전이 `Jinja2Templates.TemplateResponse`의 시그니처를 `(name, {"request":...})`에서 `(request, name, context)`로 변경했음. 기존 방식으로 호출한 3곳(`pages.py`)이 500 에러를 냈고, 신버전 시그니처로 수정해 해결. **정적 검증(임포트/템플릿 더미 렌더링)만으로는 이 버그를 못 잡았음** — 실제 실행 검증이 필요했던 사례.
