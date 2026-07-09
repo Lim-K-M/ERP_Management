@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.constants import ALLOWED_TRANSITIONS
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.metadata import metadata
-from app.schemas.employee import EmployeeCreate, EmployeeUpdate
+from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
 
 
 def _employee_select():
@@ -33,9 +33,19 @@ def _employee_select():
     )
 
 
-async def list_employees(session: AsyncSession):
+async def list_employees(session: AsyncSession, filters: EmployeeFilter | None = None):
     employee = metadata.tables["t_employee"]
-    stmt = _employee_select().order_by(employee.c.emp_no)
+    stmt = _employee_select()
+
+    if filters is not None:
+        if filters.name:
+            stmt = stmt.where(employee.c.emp_name.ilike(f"%{filters.name}%"))
+        if filters.dept_id is not None:
+            stmt = stmt.where(employee.c.dept_id == filters.dept_id)
+        if filters.status:
+            stmt = stmt.where(employee.c.emp_status == filters.status)
+
+    stmt = stmt.order_by(employee.c.emp_no)
     result = await session.execute(stmt)
     return result.mappings().all()
 

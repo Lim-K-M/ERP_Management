@@ -3,15 +3,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
-from app.schemas.employee import EmployeeCreate, EmployeeRead, EmployeeStatusUpdate, EmployeeUpdate
+from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeRead, EmployeeStatusUpdate, EmployeeUpdate
 from app.services import employee_service
 
 router = APIRouter(prefix="/api/employees", tags=["employees"])
 
 
 @router.get("", response_model=list[EmployeeRead])
-async def list_employees(session: AsyncSession = Depends(get_session)):
-    return await employee_service.list_employees(session)
+async def list_employees(
+    name: str | None = None,
+    dept_id: int | None = None,
+    status: str | None = None,
+    session: AsyncSession = Depends(get_session),
+):
+    filters = EmployeeFilter(name=name, dept_id=dept_id, status=status)
+    return await employee_service.list_employees(session, filters)
 
 
 @router.post("", response_model=EmployeeRead, status_code=201)

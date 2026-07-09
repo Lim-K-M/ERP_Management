@@ -111,6 +111,32 @@ h2 {
     margin-bottom: var(--space-4);
 }
 
+.toolbar input,
+.toolbar select {
+    max-width: 200px;
+}
+
+/* ---- 폼 입력 요소: .employee-form/.toolbar 등 어디서나 재사용 ---- */
+input[type="text"],
+input[type="email"],
+input[type="date"],
+input[type="number"],
+select {
+    font-weight: normal;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.95rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+}
+
+input:focus,
+select:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 1px;
+}
+
 .card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -256,21 +282,6 @@ h2 {
 .employee-form label {
     font-weight: 600;
     font-size: 0.9rem;
-}
-
-.employee-form input,
-.employee-form select {
-    font-weight: normal;
-    padding: 0.5rem;
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    font-size: 0.95rem;
-}
-
-.employee-form input:focus,
-.employee-form select:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 1px;
 }
 
 .employee-form .form-actions {

@@ -118,3 +118,16 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 - `_form.html` — `<label>`+`<input>`을 `.field` 단위로 재구성해 2열 그리드 레이아웃(모바일에서는 1열)으로 정리, 필드별 에러 메시지 위치 통일
 - `detail.html` — 상태 변경 버튼에 상태별 색상(재직=success outline, 휴직=warning outline, 퇴직=danger outline) 적용
 - 실제 브라우저 기준으로 목록/등록/상세 페이지 전부 200 확인, 새로 등록한 직원의 상세 페이지에서 색상이 적용된 상태 변경 버튼이 정상 렌더링되는 것까지 확인 후 테스트 데이터 정리
+- **참고**: 이 커밋은 원래 Task 5 PR(#6)에 포함시키려 했으나, push 전에 #6이 먼저 merge되어 main에 반영되지 못했다. `ERP_employee_search_filter` 브랜치로 cherry-pick해 이번 PR에 포함시켰다.
+
+### `ERP_employee_search_filter` (Task 6 — F-05)
+
+- `app/schemas/employee.py` — `EmployeeFilter`(name/dept_id/status)
+- `app/services/employee_service.py`(확장) — `list_employees`가 `EmployeeFilter`를 받아 이름 `ilike` 부분일치 + 부서/상태 동등 조건을 조합
+- `app/routers/api_employees.py`(확장) — `GET /api/employees`가 `name`/`dept_id`/`status` 쿼리 파라미터를 받음 (스펙 §5 API 스펙 표 반영)
+- `app/routers/pages.py`(확장) — `GET /employees`도 동일 쿼리 파라미터 지원, 부서 목록과 현재 필터값을 템플릿에 전달
+- `app/templates/employees/list.html` — 이름 검색창 + 부서/상태 드롭다운 + 검색/초기화 버튼(`.toolbar`), 현재 필터값이 폼에 그대로 반영되어 새로고침해도 유지
+- **실제 DB 연동 검증 완료** (테스트용 부서 5개·직급 5개·직원 100명을 로컬 DB에 시딩해 검증):
+  - 이름 부분검색, 부서 필터, 상태 필터 각각 단독 동작 확인
+  - 이름+상태 조합 필터 동작 확인 (결과 6건 전부 조건 일치)
+  - HTML 목록 페이지에서 필터 적용 시 행 수가 DB의 실제 개수와 일치, `<select>`에 현재 필터값이 `selected`로 유지되는 것 확인
