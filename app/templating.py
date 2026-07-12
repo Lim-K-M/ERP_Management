@@ -3,6 +3,8 @@ from pathlib import Path
 from fastapi.templating import Jinja2Templates
 from markupsafe import Markup
 
+from app.core.constants import CHANGE_TYPE_LABEL
+
 STATUS_BADGE = {
     "ACTIVE": {"label": "재직", "class": "badge-active"},
     "LEAVE": {"label": "휴직", "class": "badge-leave"},
@@ -15,5 +17,10 @@ def status_badge(value: str) -> Markup:
     return Markup(f'<span class="badge {meta["class"]}">{meta["label"]}</span>')
 
 
+def change_type_label(value: str) -> str:
+    return CHANGE_TYPE_LABEL.get(value, value)
+
+
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 templates.env.filters["status_badge"] = status_badge
+templates.env.filters["change_type_label"] = change_type_label

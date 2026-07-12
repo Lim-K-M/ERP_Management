@@ -25,4 +25,36 @@
     <h2>정보 수정</h2>
     {% include "employees/_form.html" %}
 </div>
+
+<div class="card">
+    <h2>인사발령 이력</h2>
+    <div class="table-wrap">
+        <table class="employee-table">
+            <thead>
+                <tr>
+                    <th>발령구분</th>
+                    <th>부서</th>
+                    <th>직급</th>
+                    <th>발령일</th>
+                    <th>비고</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td>{{ h.change_type | change_type_label }}</td>
+                    <td>{{ h.dept_name or "-" }}</td>
+                    <td>{{ h.position_name or "-" }}</td>
+                    <td>{{ h.effective_date }}</td>
+                    <td>{{ h.remark or "-" }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="empty-state">이력이 없습니다.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

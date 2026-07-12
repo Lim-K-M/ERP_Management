@@ -9,7 +9,7 @@ from app.core.constants import next_allowed_statuses
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
-from app.services import department_service, employee_service, position_service
+from app.services import department_service, employee_service, employment_history_service, position_service
 from app.services.employee_service import DEFAULT_SORT, SORT_COLUMNS
 from app.templating import templates
 
@@ -134,6 +134,7 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
         raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다.") from e
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
+    history = await employment_history_service.list_history(session, emp_id)
     return templates.TemplateResponse(
         request,
         "employees/detail.html",
@@ -144,6 +145,7 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
             "errors": {},
             "form": employee,
             "next_statuses": sorted(next_allowed_statuses(employee["emp_status"])),
+            "history": history,
         },
     )
 
@@ -158,6 +160,7 @@ async def employee_update_submit(emp_id: int, request: Request, session: AsyncSe
     form = await request.form()
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
+    history = await employment_history_service.list_history(session, emp_id)
 
     def _render_error(errors: dict[str, str]):
         return templates.TemplateResponse(
@@ -170,6 +173,7 @@ async def employee_update_submit(emp_id: int, request: Request, session: AsyncSe
                 "errors": errors,
                 "form": form,
                 "next_statuses": sorted(next_allowed_statuses(employee["emp_status"])),
+                "history": history,
             },
             status_code=422,
         )
