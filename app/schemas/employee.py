@@ -1,14 +1,46 @@
+import re
 from datetime import date
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 from app.core.constants import ALLOWED_TRANSITIONS
+
+EMP_NO_PATTERN = re.compile(r"^[A-Z]\d{4}$")
+EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+PHONE_PATTERN = re.compile(r"^\d{9,11}$")
+
+EMP_NO_FORMAT_ERROR = "사번은 알파벳 1자 + 숫자 4자리 형식이어야 합니다. (예: A0001)"
+EMAIL_FORMAT_ERROR = "이메일 형식이 올바르지 않습니다."
+PHONE_FORMAT_ERROR = "전화번호는 숫자만 입력해주세요. (하이픈 없이, 9~11자리)"
+
+
+def _normalize_emp_no(value: str) -> str:
+    value = value.upper()
+    if not EMP_NO_PATTERN.match(value):
+        raise ValueError(EMP_NO_FORMAT_ERROR)
+    return value
+
+
+def _validate_email(value: str | None) -> str | None:
+    if not value:
+        return None
+    if not EMAIL_PATTERN.match(value):
+        raise ValueError(EMAIL_FORMAT_ERROR)
+    return value
+
+
+def _validate_phone(value: str | None) -> str | None:
+    if not value:
+        return None
+    if not PHONE_PATTERN.match(value):
+        raise ValueError(PHONE_FORMAT_ERROR)
+    return value
 
 
 class EmployeeCreate(BaseModel):
     emp_no: str = Field(..., min_length=1, max_length=20)
     emp_name: str = Field(..., min_length=1, max_length=100)
-    email: EmailStr | None = Field(None, max_length=255)
+    email: str | None = Field(None, max_length=255)
     phone: str | None = Field(None, max_length=20)
     hire_date: date
     dept_id: int | None = None
@@ -18,13 +50,23 @@ class EmployeeCreate(BaseModel):
     @field_validator("emp_no")
     @classmethod
     def normalize_emp_no(cls, value: str) -> str:
-        return value.upper()
+        return _normalize_emp_no(value)
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, value: str | None) -> str | None:
+        return _validate_email(value)
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone_format(cls, value: str | None) -> str | None:
+        return _validate_phone(value)
 
 
 class EmployeeUpdate(BaseModel):
     emp_no: str | None = Field(None, min_length=1, max_length=20)
     emp_name: str | None = Field(None, min_length=1, max_length=100)
-    email: EmailStr | None = Field(None, max_length=255)
+    email: str | None = Field(None, max_length=255)
     phone: str | None = Field(None, max_length=20)
     hire_date: date | None = None
     dept_id: int | None = None
@@ -34,7 +76,17 @@ class EmployeeUpdate(BaseModel):
     @field_validator("emp_no")
     @classmethod
     def normalize_emp_no(cls, value: str | None) -> str | None:
-        return value.upper() if value is not None else value
+        return _normalize_emp_no(value) if value is not None else value
+
+    @field_validator("email")
+    @classmethod
+    def validate_email_format(cls, value: str | None) -> str | None:
+        return _validate_email(value)
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone_format(cls, value: str | None) -> str | None:
+        return _validate_phone(value)
 
 
 class EmployeeStatusUpdate(BaseModel):

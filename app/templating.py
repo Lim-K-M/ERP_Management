@@ -21,6 +21,11 @@ def change_type_label(value: str) -> str:
     return CHANGE_TYPE_LABEL.get(value, value)
 
 
+def is_logged_in(request) -> bool:
+    return bool(request.session.get("user"))
+
+
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 templates.env.filters["status_badge"] = status_badge
 templates.env.filters["change_type_label"] = change_type_label
+templates.env.globals["is_logged_in"] = is_logged_in

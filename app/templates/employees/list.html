@@ -3,7 +3,9 @@
 {% block content %}
 <div class="page-header">
     <h1>직원 목록</h1>
+    {% if is_logged_in(request) %}
     <a href="/employees/new" class="btn btn-primary">+ 직원 등록</a>
+    {% endif %}
 </div>
 <div class="list-layout">
     <aside class="sidebar">
