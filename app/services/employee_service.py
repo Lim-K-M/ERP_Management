@@ -1,4 +1,4 @@
-from sqlalchemy import extract, insert, select, update
+from sqlalchemy import extract, func, insert, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,28 +39,34 @@ def _employee_select():
     )
 
 
+def _apply_filters(stmt, employee, filters: EmployeeFilter | None):
+    if filters is None:
+        return stmt
+    if filters.name:
+        stmt = stmt.where(employee.c.emp_name.ilike(f"%{filters.name}%"))
+    if filters.dept_id is not None:
+        stmt = stmt.where(employee.c.dept_id == filters.dept_id)
+    if filters.position_id is not None:
+        stmt = stmt.where(employee.c.position_id == filters.position_id)
+    if filters.status:
+        stmt = stmt.where(employee.c.emp_status == filters.status)
+    if filters.hire_year is not None:
+        stmt = stmt.where(extract("year", employee.c.hire_date) == filters.hire_year)
+    return stmt
+
+
 async def list_employees(
     session: AsyncSession,
     filters: EmployeeFilter | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
+    page: int = 1,
+    page_size: int = 20,
 ):
     employee = metadata.tables["t_employee"]
     department = metadata.tables["t_department"]
     position = metadata.tables["t_position"]
-    stmt = _employee_select()
-
-    if filters is not None:
-        if filters.name:
-            stmt = stmt.where(employee.c.emp_name.ilike(f"%{filters.name}%"))
-        if filters.dept_id is not None:
-            stmt = stmt.where(employee.c.dept_id == filters.dept_id)
-        if filters.position_id is not None:
-            stmt = stmt.where(employee.c.position_id == filters.position_id)
-        if filters.status:
-            stmt = stmt.where(employee.c.emp_status == filters.status)
-        if filters.hire_year is not None:
-            stmt = stmt.where(extract("year", employee.c.hire_date) == filters.hire_year)
+    stmt = _apply_filters(_employee_select(), employee, filters)
 
     sort_columns = {
         "emp_no": employee.c.emp_no,
@@ -71,9 +77,16 @@ async def list_employees(
     }
     column = sort_columns.get(sort, employee.c.emp_no)
     stmt = stmt.order_by(column.desc() if order == "desc" else column.asc())
+    stmt = stmt.limit(page_size).offset((page - 1) * page_size)
 
     result = await session.execute(stmt)
     return result.mappings().all()
+
+
+async def count_employees(session: AsyncSession, filters: EmployeeFilter | None = None) -> int:
+    employee = metadata.tables["t_employee"]
+    stmt = _apply_filters(select(func.count()).select_from(employee), employee, filters)
+    return await session.scalar(stmt)
 
 
 async def list_hire_years(session: AsyncSession) -> list[int]:

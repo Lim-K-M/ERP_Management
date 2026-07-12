@@ -33,8 +33,11 @@ def _employee_form_fields(form) -> dict:
     }
 
 
+PAGE_SIZE = 20
+
+
 def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str, str], dict[str, str | None]]:
-    base_query = {k: v for k, v in request.query_params.items() if k not in ("sort", "order")}
+    base_query = {k: v for k, v in request.query_params.items() if k not in ("sort", "order", "page")}
     links: dict[str, str] = {}
     states: dict[str, str | None] = {}
     for column in SORT_COLUMNS:
@@ -42,6 +45,11 @@ def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str
         links[column] = "/employees?" + urlencode({**base_query, "sort": column, "order": next_order})
         states[column] = order if sort == column else None
     return links, states
+
+
+def _build_page_link(request: Request, target_page: int) -> str:
+    base_query = {k: v for k, v in request.query_params.items() if k != "page"}
+    return "/employees?" + urlencode({**base_query, "page": target_page})
 
 
 @router.get("/employees")
@@ -54,6 +62,7 @@ async def employee_list_page(
     hire_year: str | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
+    page: int = 1,
     session: AsyncSession = Depends(get_session),
 ):
     if sort not in SORT_COLUMNS:
@@ -62,7 +71,12 @@ async def employee_list_page(
         order = "asc"
 
     filters = EmployeeFilter(name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year)
-    employees = await employee_service.list_employees(session, filters, sort=sort, order=order)
+    total_count = await employee_service.count_employees(session, filters)
+    total_pages = max(1, -(-total_count // PAGE_SIZE))
+    page = max(1, min(page, total_pages))
+    employees = await employee_service.list_employees(
+        session, filters, sort=sort, order=order, page=page, page_size=PAGE_SIZE
+    )
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
     hire_years = await employee_service.list_hire_years(session)
@@ -81,6 +95,11 @@ async def employee_list_page(
             "sort_state": sort_state,
             "current_sort": sort,
             "current_order": order,
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_count": total_count,
+            "prev_page_link": _build_page_link(request, page - 1) if page > 1 else None,
+            "next_page_link": _build_page_link(request, page + 1) if page < total_pages else None,
         },
     )
 
