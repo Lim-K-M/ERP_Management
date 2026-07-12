@@ -11,7 +11,8 @@
 {% if is_logged_in(request) %}
 <div class="status-actions">
     {% for status in next_statuses %}
-    <form method="post" action="/employees/{{ employee.emp_id }}/status" class="status-form">
+    <form method="post" action="/employees/{{ employee.emp_id }}/status" class="status-form"
+        {% if status == 'RESIGNED' %}onsubmit="return confirm('더 이상 상태를 변경할 수 없습니다. 계속 진행하시겠습니까?');"{% endif %}>
         <input type="hidden" name="emp_status" value="{{ status }}">
         <button type="submit" class="btn {% if status == 'ACTIVE' %}btn-outline-success{% elif status == 'LEAVE' %}btn-outline-warning{% else %}btn-outline-danger{% endif %}">
             {{ status | status_badge }}로 변경
@@ -42,8 +43,5 @@
 
 {% if request.query_params.get('saved') %}
 <script>alert('저장되었습니다.');</script>
-{% endif %}
-{% if request.query_params.get('status_changed') and not next_statuses %}
-<script>alert('더 이상 상태를 변경할 수 없습니다.');</script>
 {% endif %}
 {% endblock %}

@@ -238,13 +238,11 @@ async def employee_status_submit(
     form = await request.form()
     target_status = form.get("emp_status", "")
 
-    status_changed = True
     try:
         await employee_service.change_status(session, emp_id, target_status)
     except (EmployeeNotFoundError, InvalidTransitionError):
         # 화면에는 허용된 다음 상태만 버튼으로 노출하므로, 여기 도달하면 위조된 요청이다.
         # 조용히 무시하지 않고 상세 페이지로 되돌려 현재 상태를 그대로 보여준다.
-        status_changed = False
+        pass
 
-    redirect_url = f"/employees/{emp_id}" + ("?status_changed=1" if status_changed else "")
-    return RedirectResponse(redirect_url, status_code=303)
+    return RedirectResponse(f"/employees/{emp_id}", status_code=303)
