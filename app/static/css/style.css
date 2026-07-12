@@ -79,6 +79,32 @@ h2 {
     color: #fff;
 }
 
+.nav-user {
+    color: #9ca3af;
+    font-size: 0.85rem;
+    margin-left: auto;
+}
+
+.nav-logout-form {
+    display: inline;
+}
+
+.nav-link-button {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #d1d5db;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.nav-link-button:hover {
+    color: #fff;
+}
+
 .container {
     max-width: 1040px;
     margin: 0 auto;
@@ -436,6 +462,23 @@ select:focus {
     color: var(--color-text-muted);
     margin: 0;
     font-size: 0.9rem;
+}
+
+/* ---- 읽기 전용 상세(비로그인) ---- */
+.detail-readonly {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: var(--space-2) var(--space-4);
+    margin: 0;
+}
+
+.detail-readonly dt {
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.detail-readonly dd {
+    margin: 0;
 }
 
 /* ---- 상태 변경 버튼 그룹 ---- */
