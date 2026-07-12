@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     app_db_user: str
     app_db_password: str
 
+    session_secret_key: str = "dev-only-change-me"
+    admin_username: str = "admin"
+    admin_password: str = "admin1234"
+
     @property
     def database_url(self) -> str:
         return (
