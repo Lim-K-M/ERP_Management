@@ -17,7 +17,7 @@
 - [x] PostgreSQL에 실제로 저장된다 — WSL2 복구 후 `docker compose up` + `uvicorn` 실행, 한글 포함 정상 저장 확인(F-01~F-04 범위)
 
 ## 검증
-- [x] 로컬에서 실행해 브라우저로 동작 확인 — F-01~F-05(검색/필터 포함) 범위까지. bonus(인사발령 이력)는 구현 후 재확인 필요
+- [x] 로컬에서 실행해 브라우저로 동작 확인 — F-01~F-05(검색/필터 포함) + bonus(인사발령 이력, 목록 페이지네이션) 전부 실제 DB로 검증 완료
 - [ ] 요구사항 정의서 항목과 대조
 - [ ] 산출물 정리 — 결과화면 · AI 활용 · 만든 스킬
 
@@ -32,4 +32,4 @@
 | `ERP_employee_search_filter` | F-05 검색/필터 (선택) | 완료, 실제 DB로 검증 완료 (Task 5 UI 폴리싱 커밋도 이 브랜치로 cherry-pick해 포함) |
 | `ERP_data_integrity_review` | 데이터 무결성 리뷰 문서 | PR #8 리뷰 대기 |
 | `ERP_employee_integrity_and_sort` | 무결성 리뷰 반영(순환참조/레이스컨디션/퇴직자매니저/사번대소문자/부서필터빈값버그) + 목록 정렬(사번/이름/부서/직급/상태) | 완료, 실제 DB로 검증 완료 |
-| `ERP_employment_history` | 인사발령 이력 bonus (선택) | 예정 |
+| `feature/employment-history` | 인사발령 이력 bonus(선택) — HIRE/TRANSFER/PROMOTION/LEAVE/RETURN/RESIGN 전체 기록·조회 + 목록 페이지네이션(20명/페이지) | 완료, 실제 DB로 검증 완료(계획서: `docs/plans/2026-07-12-employment-history-bonus-plan.md`) |
