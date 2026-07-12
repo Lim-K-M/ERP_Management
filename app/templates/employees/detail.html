@@ -39,4 +39,11 @@
     </dl>
 </div>
 {% endif %}
+
+{% if request.query_params.get('saved') %}
+<script>alert('저장되었습니다.');</script>
+{% endif %}
+{% if request.query_params.get('status_changed') and not next_statuses %}
+<script>alert('더 이상 상태를 변경할 수 없습니다.');</script>
+{% endif %}
 {% endblock %}
