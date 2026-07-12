@@ -47,7 +47,7 @@ Router(HTML/JSON) → Service(순수 로직) → 리플렉션된 Table. 별도 C
 | `phone` 선택·최대 20자 | `str \| None = Field(None, max_length=20)` |
 | `hire_date` 필수·날짜 | `date` |
 | `dept_id`/`position_id` 지정 시 실존 확인 | Service에서 조회 후 없으면 422(`HTTPException`) — FK 위반 예외를 그대로 노출하지 않음 |
-| `manager_id` 실존 + 자기 자신 불가 | Service에서 조회 확인 + `model_validator`로 `manager_id != emp_id`(자기 자신 참조 시 등록/수정 단계에서는 emp_id를 아직 모르므로 수정 API에서만 적용) |
+| `manager_id` 실존 + 자기 자신 불가 | Pydantic validator가 아니라 **전부 Service**(`_validate_references`)에서 처리: 실존 확인, `manager_id == emp_id`(자기 자신, 수정 API에서만 emp_id를 알 수 있어 적용), 퇴직자 지정 금지, 순환 참조 확인까지 한 곳에서 수행 |
 | `emp_status` 등록 시 서버 강제 `ACTIVE` | `EmployeeCreate` 스키마에 `emp_status` 필드 자체를 두지 않음(클라이언트가 값을 보내도 무시) |
 | `emp_status` 값·전이 | §4 상태 전이 패턴 참고 |
 
@@ -56,22 +56,43 @@ Router(HTML/JSON) → Service(순수 로직) → 리플렉션된 Table. 별도 C
 > **참고 — Pydantic v2 커스텀 validator 에러 메시지**: `field_validator`에서 `raise ValueError(msg)`를 하면 Pydantic이 자동으로 `"Value error, "` 접두사를 붙인다. 화면에 한글 메시지만 깔끔하게 보여주려면 라우터에서 `err["msg"].removeprefix("Value error, ")`로 벗겨낸다.
 
 ## 4. 상태 전이 패턴 (F-04)
-스펙 §2의 허용 전이(`ACTIVE ⇄ LEAVE`, `(ACTIVE|LEAVE) → RESIGNED`, `RESIGNED`는 터미널)를 단일 상수로 관리한다.
+스펙 §2의 허용 전이(`ACTIVE ⇄ LEAVE`, `(ACTIVE|LEAVE) → RESIGNED`, `RESIGNED`는 터미널)를 단일 상수로 관리한다. Service는 FastAPI에 의존하지 않아야 하므로(§2 원칙), `HTTPException`을 직접 던지지 않고 순수 예외를 발생시켜 Router에서 HTTP 상태 코드로 변환한다.
 
 ```python
+# app/core/constants.py
 ALLOWED_TRANSITIONS: dict[str, set[str]] = {
     "ACTIVE": {"LEAVE", "RESIGNED"},
     "LEAVE": {"ACTIVE", "RESIGNED"},
     "RESIGNED": set(),
 }
 
+# app/core/exceptions.py
+class InvalidTransitionError(Exception):
+    def __init__(self, current: str, target: str):
+        self.current = current
+        self.target = target
+        super().__init__(f"{current} -> {target} 전이는 허용되지 않습니다.")
 
-def assert_transition_allowed(current: str, target: str) -> None:
-    if target not in ALLOWED_TRANSITIONS[current]:
-        raise HTTPException(status_code=409, detail=f"{current} -> {target} 전이는 허용되지 않습니다.")
+# app/services/employee_service.py
+async def change_status(session, emp_id: int, target_status: str) -> None:
+    current = await get_employee(session, emp_id)
+    if target_status not in ALLOWED_TRANSITIONS[current["emp_status"]]:
+        raise InvalidTransitionError(current["emp_status"], target_status)
+    # 현재 상태를 조건으로 건 조건부 UPDATE로 레이스 컨디션 방지 (rowcount==0이면 그 사이 상태가 바뀐 것)
+    ...
+
+# app/routers/api_employees.py
+@router.patch("/{emp_id}/status")
+async def change_status(emp_id: int, payload: EmployeeStatusUpdate, session=Depends(get_session)):
+    try:
+        await employee_service.change_status(session, emp_id, payload.emp_status)
+    except InvalidTransitionError as e:
+        raise HTTPException(status_code=409, detail=str(e)) from e
+    return await employee_service.get_employee(session, emp_id)
 ```
 
-- 상태 변경 API(`PATCH /api/employees/{id}/status`)는 항상 이 함수를 거친다. 허용되지 않은 전이는 **요청 자체를 거부**(409) — 부분 처리하거나 조용히 무시하지 않는다.
+- 상태 변경 API(`PATCH /api/employees/{id}/status`)는 항상 Service의 전이 검증을 거친다. 허용되지 않은 전이는 **요청 자체를 거부**(409) — 부분 처리하거나 조용히 무시하지 않는다.
+- 화면 라우터(`routers/pages.py`)는 같은 `InvalidTransitionError`를 잡아 위조 요청으로 간주하고 상세 페이지로 되돌린다(화면에는 애초에 허용된 다음 상태만 버튼으로 노출하므로, 여기 도달하면 요청이 조작된 경우다).
 - 화면에는 `ALLOWED_TRANSITIONS[current_status]`로 계산한 "현재 허용되는 다음 상태"만 버튼으로 노출한다(→ 렌더링은 `jinja2-ssr-frontend` 담당, 계산은 이 스킬의 Service 로직).
 
 ## 5. 에러 응답
