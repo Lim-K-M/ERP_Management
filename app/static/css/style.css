@@ -266,6 +266,7 @@ input[type="text"],
 input[type="email"],
 input[type="date"],
 input[type="number"],
+input[type="password"],
 select {
     font-weight: normal;
     padding: 0.5rem;
