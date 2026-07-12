@@ -393,13 +393,49 @@ select:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: var(--space-4);
+    gap: var(--space-3);
     margin-top: var(--space-4);
+}
+
+.pagination-numbers {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.pagination-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.pagination-number:hover {
+    background: var(--color-bg);
+}
+
+.pagination-number-active {
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+}
+
+.pagination-ellipsis {
+    color: var(--color-text-muted);
+    padding: 0 var(--space-1);
 }
 
 .pagination-status {
     color: var(--color-text-muted);
     font-size: 0.85rem;
+    text-align: center;
+    margin-top: var(--space-2);
 }
 
 .sort-arrow {

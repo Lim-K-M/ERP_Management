@@ -57,6 +57,22 @@ def _build_page_link(request: Request, target_page: int) -> str:
     return "/employees?" + urlencode({**base_query, "page": target_page})
 
 
+def _page_numbers(current: int, total: int, window: int = 2) -> list[int | None]:
+    """현재 페이지 주변 + 처음/끝 페이지 번호 목록. 건너뛴 구간은 None(생략 표시)."""
+    if total <= 1:
+        return [1]
+    keep = {1, total, current}
+    keep.update(p for p in range(current - window, current + window + 1) if 1 <= p <= total)
+    numbers: list[int | None] = []
+    prev: int | None = None
+    for p in sorted(keep):
+        if prev is not None and p - prev > 1:
+            numbers.append(None)
+        numbers.append(p)
+        prev = p
+    return numbers
+
+
 @router.get("/login")
 async def login_page(request: Request, next: str = "/employees"):
     return templates.TemplateResponse(request, "login.html", {"error": None, "next": next})
@@ -135,6 +151,8 @@ async def employee_list_page(
             "total_count": total_count,
             "prev_page_link": _build_page_link(request, page - 1) if page > 1 else None,
             "next_page_link": _build_page_link(request, page + 1) if page < total_pages else None,
+            "page_numbers": _page_numbers(page, total_pages),
+            "page_number_link": lambda p: _build_page_link(request, p),
         },
     )
 
