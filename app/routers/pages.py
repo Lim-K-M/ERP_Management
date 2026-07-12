@@ -117,7 +117,9 @@ async def employee_list_page(
 
 
 @router.get("/employees/new")
-async def employee_register_page(request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_register_page(
+    request: Request, session: AsyncSession = Depends(get_session), user: str = Depends(require_login)
+):
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
     return templates.TemplateResponse(
@@ -128,7 +130,9 @@ async def employee_register_page(request: Request, session: AsyncSession = Depen
 
 
 @router.post("/employees/new")
-async def employee_register_submit(request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_register_submit(
+    request: Request, session: AsyncSession = Depends(get_session), user: str = Depends(require_login)
+):
     form = await request.form()
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
@@ -180,7 +184,12 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
 
 
 @router.post("/employees/{emp_id}")
-async def employee_update_submit(emp_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_update_submit(
+    emp_id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login),
+):
     try:
         employee = await employee_service.get_employee(session, emp_id)
     except EmployeeNotFoundError as e:
@@ -220,7 +229,12 @@ async def employee_update_submit(emp_id: int, request: Request, session: AsyncSe
 
 
 @router.post("/employees/{emp_id}/status")
-async def employee_status_submit(emp_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_status_submit(
+    emp_id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login),
+):
     form = await request.form()
     target_status = form.get("emp_status", "")
 

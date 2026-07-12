@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import require_login_api
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeRead, EmployeeStatusUpdate, EmployeeUpdate
@@ -30,7 +31,11 @@ async def list_employees(
 
 
 @router.post("", response_model=EmployeeRead, status_code=201)
-async def create_employee(payload: EmployeeCreate, session: AsyncSession = Depends(get_session)):
+async def create_employee(
+    payload: EmployeeCreate,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login_api),
+):
     try:
         emp_id = await employee_service.create_employee(session, payload)
     except EmployeeValidationError as e:
@@ -47,7 +52,12 @@ async def get_employee(emp_id: int, session: AsyncSession = Depends(get_session)
 
 
 @router.patch("/{emp_id}", response_model=EmployeeRead)
-async def update_employee(emp_id: int, payload: EmployeeUpdate, session: AsyncSession = Depends(get_session)):
+async def update_employee(
+    emp_id: int,
+    payload: EmployeeUpdate,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login_api),
+):
     try:
         await employee_service.update_employee(session, emp_id, payload)
     except EmployeeNotFoundError as e:
@@ -58,7 +68,12 @@ async def update_employee(emp_id: int, payload: EmployeeUpdate, session: AsyncSe
 
 
 @router.patch("/{emp_id}/status", response_model=EmployeeRead)
-async def change_status(emp_id: int, payload: EmployeeStatusUpdate, session: AsyncSession = Depends(get_session)):
+async def change_status(
+    emp_id: int,
+    payload: EmployeeStatusUpdate,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login_api),
+):
     try:
         await employee_service.change_status(session, emp_id, payload.emp_status)
     except EmployeeNotFoundError as e:
