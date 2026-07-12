@@ -33,3 +33,7 @@
 | `ERP_data_integrity_review` | 데이터 무결성 리뷰 문서 | PR #8 리뷰 대기 |
 | `ERP_employee_integrity_and_sort` | 무결성 리뷰 반영(순환참조/레이스컨디션/퇴직자매니저/사번대소문자/부서필터빈값버그) + 목록 정렬(사번/이름/부서/직급/상태) | 완료, 실제 DB로 검증 완료 |
 | `ERP_employment_history` | 인사발령 이력 bonus (선택) | 예정 |
+| `feature/employee-login-auth` | 로그인 보호(스펙 범위 밖 별도 확장) — 세션 로그인, 등록/수정/상태변경만 보호, 조회는 그대로 공개 | 완료, 실제 DB/브라우저로 검증 완료 |
+
+## 참고 — 스펙 범위 밖 별도 확장
+- **로그인 기능**: `docs/specs/2026-07-08-employee-management-spec.md` §7은 "인증 없음"을 명시하고 있어 spec 문서 자체는 수정하지 않았다. 사용자 요청에 따라 별도 확장으로 세션 기반 로그인을 추가해 등록/수정/상태변경만 로그인 필수로 제한했다(계획서: `docs/plans/2026-07-12-employee-login-auth-plan.md`). 로컬 데모용 단일 계정(`admin` / `admin1234`, `.env`로 재정의 가능)이며 감사 컬럼 `_BY`는 기존과 동일하게 NULL로 유지한다.
