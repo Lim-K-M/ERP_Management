@@ -47,6 +47,16 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 ```
 
+### 로그인 (스펙 범위 밖 별도 확장)
+
+등록/수정/상태변경은 로그인이 필요하다(조회는 로그인 없이 가능). 로컬 데모용 단일 계정:
+
+| 아이디 | 비밀번호 |
+|---|---|
+| `admin` | `admin1234` |
+
+`.env`의 `ADMIN_USERNAME` / `ADMIN_PASSWORD`로 재정의 가능. 자세한 내용은 `docs/internal/progress-checklist.md`의 "스펙 범위 밖 별도 확장" 참고.
+
 ## 진행 상황
 
 - 계획: `docs/plans/2026-07-08-employee-management-plan.md`
@@ -163,3 +173,33 @@ uvicorn app.main:app --reload   # http://localhost:8000/healthz 로 확인
 - `.sidebar`에 `position: sticky` 적용 — 페이지를 아래로 스크롤해도 사이드바가 함께 따라오도록 처리(콘텐츠가 뷰포트보다 길어질 경우를 대비해 `max-height`+`overflow-y: auto`도 함께 지정)
 - `app/schemas/employee.py`의 `EmployeeFilter`에 `position_id`/`hire_year` 추가, `employee_service.list_employees`가 직급/입사연도 조건을 조합. `list_hire_years()`로 실제 DB에 존재하는 입사연도만 드롭다운에 노출
 - **실제 DB 연동 검증 완료**: 사이드바 연도 옵션이 실제 데이터 기준(2018~2026)으로 뜨는 것 확인, 부서+상태 조합 선택 시 각 `<select>`에 `selected`로 반영되고 실제 조회 결과(17건)가 조건과 정확히 일치하는 것까지 확인
+
+### `feature/employee-login-auth` (PR #11 — 스펙 범위 밖 별도 확장)
+
+spec §7이 "인증 없음"을 명시하고 있어 spec 문서 자체는 그대로 두고, 사용자 요청에 따라 세션 기반 로그인을 별도 확장으로 추가. 등록/수정/상태변경만 로그인 필수로 제한하고 조회(F-01/F-05/bonus)는 그대로 공개.
+
+- `app/core/auth.py` — `require_login`(페이지, 미로그인 시 `/login`으로 303)/`require_login_api`(API, 401) 두 종류의 의존성
+- Starlette `SessionMiddleware`(서명된 쿠키) 등록, 로컬 데모용 단일 계정(`admin`/`admin1234`, `.env`로 재정의 가능)
+- `app/templating.py`의 `is_logged_in(request)` 전역 함수로 템플릿에서 로그인 여부 분기 — 비로그인 시 목록의 등록 버튼, 상세의 수정폼/상태변경 버튼을 숨기고 읽기전용으로 표시
+- 저장 성공 시 "저장되었습니다" 팝업, 퇴직(터미널 상태) 처리 전 confirm()으로 재확인 팝업 추가
+- 사번(`^A\d{4}$`)/이메일/전화번호(숫자 9~11자리) 형식 검증 강화 — 이것도 spec §4보다 엄격한 별도 확장(자세한 내용은 `docs/internal/progress-checklist.md` 참고)
+- **실제 브라우저/curl 검증 완료**: 비로그인 시 쓰기 라우트 303/401 차단, 로그인 후 정상 동작, 로그아웃 후 재차단, 조회는 로그아웃 상태에서도 항상 가능
+
+### `feature/employment-history` (PR #12 — Task 7, Bonus)
+
+spec §3 Bonus(인사 발령 이력 + 목록 페이지네이션)를 원 계획(Task 7)보다 확장된 범위로 구현 — CHANGE_TYPE 6종(HIRE/TRANSFER/PROMOTION/LEAVE/RETURN/RESIGN) 전부 기록.
+
+- `app/services/employment_history_service.py` — `record_history()`/`list_history()`
+- `app/services/employee_service.py`(확장) — 등록=HIRE, 부서변경=TRANSFER, 직급변경=PROMOTION, 상태변경은 LEAVE/RETURN/RESIGN으로 매핑해 같은 트랜잭션에서 기록
+- `GET /api/employees/{id}/history` 추가, 상세 페이지에 이력 표 노출(로그인 여부 무관, 조회이므로)
+- `employee_service`에 `count_employees()`/필터 로직 공유(`_apply_filters`), `list_employees`에 `page`/`page_size` 추가 — 목록 페이지·JSON API 모두 페이지네이션(20명/페이지) 지원
+- **실제 DB 연동 검증 완료**: HIRE→TRANSFER→PROMOTION→LEAVE→RETURN→RESIGN 전체 시나리오로 이력 순서 확인, 100명 데이터로 5페이지 분할·경계·필터 재계산 확인
+
+### 제출물 정리 (Task 8, PR #13~#19)
+
+- **요구사항 정의서 대조**(#13): spec §1~§7 전 항목을 실제 curl/DB 조회로 재검증. 로그인 확장으로 spec §7의 "인증 없음→CSRF 트레이드오프 허용" 전제가 깨진 점을 잔여 리스크로 기록
+- **결과화면 스크린샷**(#14, #16): Playwright로 헤드리스 브라우저를 직접 구동해 로그인→등록→부서/직급 변경→상태변경까지 실제 시나리오를 수행하며 8장 캡처(`docs/internal/screenshots/`)
+- **버그 수정**(#15): 사번 형식이 "알파벳 **A** + 숫자 4자리"여야 하는데 정규식을 `^[A-Z]\d{4}$`(임의 알파벳)로 잘못 일반화했던 버그를 `^A\d{4}$`로 수정. 목록에 구글 스타일 페이지 번호 네비게이션(이전/다음 + 1,2,3,…,N) 추가
+- **AI 활용 정리**(#17): `docs/internal/2026-07-08-ai-usage.md` — 계획서 우선 워크플로우, AI가 발견한 버그, 스펙 범위 밖 확장 승인 절차, AI 자신의 실수(사번 정규식 과일반화·`main` 직접 커밋·인코딩 문제)와 정정 과정 정리
+- **스킬 최종 점검**(#18): `fastapi-service-architecture`/`jinja2-ssr-frontend` 두 스킬을 실제 구현과 대조 — PRG 예제의 구버전 `TemplateResponse` 시그니처, `EmailStr`→커스텀 정규식 전환 등 stale한 부분 수정
+- **최종 PR 목록/커밋 로그 정리**(#19): `docs/internal/progress-checklist.md`에 전체 PR을 분류한 표 추가
