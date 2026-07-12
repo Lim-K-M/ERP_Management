@@ -88,9 +88,20 @@
         </div>
         <nav class="pagination">
             {% if prev_page_link %}<a href="{{ prev_page_link }}" class="btn btn-outline">이전</a>{% endif %}
-            <span class="pagination-status">{{ current_page }} / {{ total_pages }} 페이지 (전체 {{ total_count }}명)</span>
+            <span class="pagination-numbers">
+                {% for p in page_numbers %}
+                    {% if p is none %}
+                    <span class="pagination-ellipsis">…</span>
+                    {% elif p == current_page %}
+                    <span class="pagination-number pagination-number-active">{{ p }}</span>
+                    {% else %}
+                    <a href="{{ page_number_link(p) }}" class="pagination-number">{{ p }}</a>
+                    {% endif %}
+                {% endfor %}
+            </span>
             {% if next_page_link %}<a href="{{ next_page_link }}" class="btn btn-outline">다음</a>{% endif %}
         </nav>
+        <p class="pagination-status">전체 {{ total_count }}명 · {{ current_page }} / {{ total_pages }} 페이지</p>
     </div>
 </div>
 {% endblock %}
