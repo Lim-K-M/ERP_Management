@@ -15,3 +15,7 @@ class InvalidTransitionError(Exception):
         self.current = current
         self.target = target
         super().__init__(f"{current} -> {target} 전이는 허용되지 않습니다.")
+
+
+class LoginRequiredError(Exception):
+    pass

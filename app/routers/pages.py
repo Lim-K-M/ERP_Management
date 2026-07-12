@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import require_login, verify_credentials
 from app.core.constants import next_allowed_statuses
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
@@ -42,6 +43,36 @@ def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str
         links[column] = "/employees?" + urlencode({**base_query, "sort": column, "order": next_order})
         states[column] = order if sort == column else None
     return links, states
+
+
+@router.get("/login")
+async def login_page(request: Request, next: str = "/employees"):
+    return templates.TemplateResponse(request, "login.html", {"error": None, "next": next})
+
+
+@router.post("/login")
+async def login_submit(request: Request):
+    form = await request.form()
+    username = form.get("username", "")
+    password = form.get("password", "")
+    next_url = form.get("next") or "/employees"
+
+    if verify_credentials(username, password):
+        request.session["user"] = username
+        return RedirectResponse(next_url, status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {"error": "아이디 또는 비밀번호가 올바르지 않습니다.", "next": next_url},
+        status_code=401,
+    )
+
+
+@router.post("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/employees", status_code=303)
 
 
 @router.get("/employees")
