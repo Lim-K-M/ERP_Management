@@ -1,4 +1,4 @@
-from sqlalchemy import extract, insert, select, update
+from sqlalchemy import extract, func, insert, select, update
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -6,6 +6,9 @@ from app.core.constants import ALLOWED_TRANSITIONS
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.metadata import metadata
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
+from app.services import employment_history_service
+
+STATUS_TO_CHANGE_TYPE = {"LEAVE": "LEAVE", "ACTIVE": "RETURN", "RESIGNED": "RESIGN"}
 
 SORT_COLUMNS = ("emp_no", "emp_name", "dept_name", "position_name", "emp_status")
 DEFAULT_SORT = "emp_no"
@@ -36,28 +39,34 @@ def _employee_select():
     )
 
 
+def _apply_filters(stmt, employee, filters: EmployeeFilter | None):
+    if filters is None:
+        return stmt
+    if filters.name:
+        stmt = stmt.where(employee.c.emp_name.ilike(f"%{filters.name}%"))
+    if filters.dept_id is not None:
+        stmt = stmt.where(employee.c.dept_id == filters.dept_id)
+    if filters.position_id is not None:
+        stmt = stmt.where(employee.c.position_id == filters.position_id)
+    if filters.status:
+        stmt = stmt.where(employee.c.emp_status == filters.status)
+    if filters.hire_year is not None:
+        stmt = stmt.where(extract("year", employee.c.hire_date) == filters.hire_year)
+    return stmt
+
+
 async def list_employees(
     session: AsyncSession,
     filters: EmployeeFilter | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
+    page: int = 1,
+    page_size: int = 20,
 ):
     employee = metadata.tables["t_employee"]
     department = metadata.tables["t_department"]
     position = metadata.tables["t_position"]
-    stmt = _employee_select()
-
-    if filters is not None:
-        if filters.name:
-            stmt = stmt.where(employee.c.emp_name.ilike(f"%{filters.name}%"))
-        if filters.dept_id is not None:
-            stmt = stmt.where(employee.c.dept_id == filters.dept_id)
-        if filters.position_id is not None:
-            stmt = stmt.where(employee.c.position_id == filters.position_id)
-        if filters.status:
-            stmt = stmt.where(employee.c.emp_status == filters.status)
-        if filters.hire_year is not None:
-            stmt = stmt.where(extract("year", employee.c.hire_date) == filters.hire_year)
+    stmt = _apply_filters(_employee_select(), employee, filters)
 
     sort_columns = {
         "emp_no": employee.c.emp_no,
@@ -68,9 +77,16 @@ async def list_employees(
     }
     column = sort_columns.get(sort, employee.c.emp_no)
     stmt = stmt.order_by(column.desc() if order == "desc" else column.asc())
+    stmt = stmt.limit(page_size).offset((page - 1) * page_size)
 
     result = await session.execute(stmt)
     return result.mappings().all()
+
+
+async def count_employees(session: AsyncSession, filters: EmployeeFilter | None = None) -> int:
+    employee = metadata.tables["t_employee"]
+    stmt = _apply_filters(select(func.count()).select_from(employee), employee, filters)
+    return await session.scalar(stmt)
 
 
 async def list_hire_years(session: AsyncSession) -> list[int]:
@@ -180,14 +196,23 @@ async def create_employee(session: AsyncSession, payload: EmployeeCreate) -> int
         await session.rollback()
         raise EmployeeValidationError({"emp_no": "이미 사용 중인 사번입니다."}) from e
 
+    emp_id = result.scalar_one()
+    await employment_history_service.record_history(
+        session,
+        emp_id=emp_id,
+        change_type="HIRE",
+        dept_id=payload.dept_id,
+        position_id=payload.position_id,
+        effective_date=payload.hire_date,
+    )
     await session.commit()
-    return result.scalar_one()
+    return emp_id
 
 
 async def update_employee(session: AsyncSession, emp_id: int, payload: EmployeeUpdate) -> None:
     employee = metadata.tables["t_employee"]
 
-    await get_employee(session, emp_id)  # 404 if not found
+    before = await get_employee(session, emp_id)  # 404 if not found
 
     values = payload.model_dump(exclude_unset=True)
     if not values:
@@ -209,6 +234,18 @@ async def update_employee(session: AsyncSession, emp_id: int, payload: EmployeeU
     except IntegrityError as e:
         await session.rollback()
         raise EmployeeValidationError({"emp_no": "이미 사용 중인 사번입니다."}) from e
+
+    new_dept_id = values.get("dept_id", before["dept_id"])
+    new_position_id = values.get("position_id", before["position_id"])
+
+    if "dept_id" in values and values["dept_id"] != before["dept_id"]:
+        await employment_history_service.record_history(
+            session, emp_id=emp_id, change_type="TRANSFER", dept_id=new_dept_id, position_id=new_position_id
+        )
+    if "position_id" in values and values["position_id"] != before["position_id"]:
+        await employment_history_service.record_history(
+            session, emp_id=emp_id, change_type="PROMOTION", dept_id=new_dept_id, position_id=new_position_id
+        )
 
     await session.commit()
 
@@ -234,4 +271,11 @@ async def change_status(session: AsyncSession, emp_id: int, target_status: str) 
         await session.rollback()
         raise InvalidTransitionError(current_status, target_status)
 
+    await employment_history_service.record_history(
+        session,
+        emp_id=emp_id,
+        change_type=STATUS_TO_CHANGE_TYPE[target_status],
+        dept_id=current["dept_id"],
+        position_id=current["position_id"],
+    )
     await session.commit()

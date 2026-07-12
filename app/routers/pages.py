@@ -10,7 +10,7 @@ from app.core.constants import next_allowed_statuses
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
 from app.schemas.employee import EmployeeCreate, EmployeeFilter, EmployeeUpdate
-from app.services import department_service, employee_service, position_service
+from app.services import department_service, employee_service, employment_history_service, position_service
 from app.services.employee_service import DEFAULT_SORT, SORT_COLUMNS
 from app.templating import templates
 
@@ -38,8 +38,11 @@ def _employee_form_fields(form) -> dict:
     }
 
 
+PAGE_SIZE = 20
+
+
 def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str, str], dict[str, str | None]]:
-    base_query = {k: v for k, v in request.query_params.items() if k not in ("sort", "order")}
+    base_query = {k: v for k, v in request.query_params.items() if k not in ("sort", "order", "page")}
     links: dict[str, str] = {}
     states: dict[str, str | None] = {}
     for column in SORT_COLUMNS:
@@ -47,6 +50,11 @@ def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str
         links[column] = "/employees?" + urlencode({**base_query, "sort": column, "order": next_order})
         states[column] = order if sort == column else None
     return links, states
+
+
+def _build_page_link(request: Request, target_page: int) -> str:
+    base_query = {k: v for k, v in request.query_params.items() if k != "page"}
+    return "/employees?" + urlencode({**base_query, "page": target_page})
 
 
 @router.get("/login")
@@ -89,6 +97,7 @@ async def employee_list_page(
     hire_year: str | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
+    page: int = 1,
     session: AsyncSession = Depends(get_session),
 ):
     if sort not in SORT_COLUMNS:
@@ -97,7 +106,12 @@ async def employee_list_page(
         order = "asc"
 
     filters = EmployeeFilter(name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year)
-    employees = await employee_service.list_employees(session, filters, sort=sort, order=order)
+    total_count = await employee_service.count_employees(session, filters)
+    total_pages = max(1, -(-total_count // PAGE_SIZE))
+    page = max(1, min(page, total_pages))
+    employees = await employee_service.list_employees(
+        session, filters, sort=sort, order=order, page=page, page_size=PAGE_SIZE
+    )
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
     hire_years = await employee_service.list_hire_years(session)
@@ -116,6 +130,11 @@ async def employee_list_page(
             "sort_state": sort_state,
             "current_sort": sort,
             "current_order": order,
+            "current_page": page,
+            "total_pages": total_pages,
+            "total_count": total_count,
+            "prev_page_link": _build_page_link(request, page - 1) if page > 1 else None,
+            "next_page_link": _build_page_link(request, page + 1) if page < total_pages else None,
         },
     )
 
@@ -173,6 +192,7 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
         raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다.") from e
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
+    history = await employment_history_service.list_history(session, emp_id)
     return templates.TemplateResponse(
         request,
         "employees/detail.html",
@@ -183,6 +203,7 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
             "errors": {},
             "form": employee,
             "next_statuses": sorted(next_allowed_statuses(employee["emp_status"])),
+            "history": history,
         },
     )
 
@@ -202,6 +223,7 @@ async def employee_update_submit(
     form = await request.form()
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
+    history = await employment_history_service.list_history(session, emp_id)
 
     def _render_error(errors: dict[str, str]):
         return templates.TemplateResponse(
@@ -214,6 +236,7 @@ async def employee_update_submit(
                 "errors": errors,
                 "form": form,
                 "next_statuses": sorted(next_allowed_statuses(employee["emp_status"])),
+                "history": history,
             },
             status_code=422,
         )

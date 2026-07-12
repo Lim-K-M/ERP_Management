@@ -10,7 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.config import settings
 from app.core.exceptions import LoginRequiredError
 from app.db.metadata import metadata, reflect_metadata
-from app.routers import api_departments, api_employees, api_positions, pages
+from app.routers import api_departments, api_employees, api_employment_history, api_positions, pages
 
 
 @asynccontextmanager
@@ -25,6 +25,7 @@ app.mount("/static", StaticFiles(directory=str(Path(__file__).parent / "static")
 
 app.include_router(pages.router)
 app.include_router(api_employees.router)
+app.include_router(api_employment_history.router)
 app.include_router(api_departments.router)
 app.include_router(api_positions.router)
 

@@ -20,6 +20,8 @@ async def list_employees(
     hire_year: str | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
+    page: int = 1,
+    page_size: int = 20,
     session: AsyncSession = Depends(get_session),
 ):
     if sort not in SORT_COLUMNS:
@@ -27,7 +29,7 @@ async def list_employees(
     if order not in ("asc", "desc"):
         order = "asc"
     filters = EmployeeFilter(name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year)
-    return await employee_service.list_employees(session, filters, sort=sort, order=order)
+    return await employee_service.list_employees(session, filters, sort=sort, order=order, page=page, page_size=page_size)
 
 
 @router.post("", response_model=EmployeeRead, status_code=201)

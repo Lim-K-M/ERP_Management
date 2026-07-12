@@ -86,6 +86,11 @@
                 </tbody>
             </table>
         </div>
+        <nav class="pagination">
+            {% if prev_page_link %}<a href="{{ prev_page_link }}" class="btn btn-outline">이전</a>{% endif %}
+            <span class="pagination-status">{{ current_page }} / {{ total_pages }} 페이지 (전체 {{ total_count }}명)</span>
+            {% if next_page_link %}<a href="{{ next_page_link }}" class="btn btn-outline">다음</a>{% endif %}
+        </nav>
     </div>
 </div>
 {% endblock %}
