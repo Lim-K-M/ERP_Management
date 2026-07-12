@@ -43,13 +43,17 @@ Router(HTML/JSON) → Service(순수 로직) → 리플렉션된 Table. 별도 C
 |---|---|
 | `emp_no` 필수·최대 20자·고유 | `str = Field(..., max_length=20)` + INSERT 시 `IntegrityError`(23505) 캐치 → 422로 변환 |
 | `emp_name` 필수·최대 100자 | `str = Field(..., max_length=100)` |
-| `email` 선택·이메일 형식·최대 255자 | `EmailStr \| None = Field(None, max_length=255)` |
+| `email` 선택·이메일 형식·최대 255자 | `str \| None = Field(None, max_length=255)` + `field_validator`로 정규식 검증(한글 에러 메시지 직접 제어 위해 `EmailStr` 대신 커스텀 정규식 사용) |
 | `phone` 선택·최대 20자 | `str \| None = Field(None, max_length=20)` |
 | `hire_date` 필수·날짜 | `date` |
 | `dept_id`/`position_id` 지정 시 실존 확인 | Service에서 조회 후 없으면 422(`HTTPException`) — FK 위반 예외를 그대로 노출하지 않음 |
 | `manager_id` 실존 + 자기 자신 불가 | Service에서 조회 확인 + `model_validator`로 `manager_id != emp_id`(자기 자신 참조 시 등록/수정 단계에서는 emp_id를 아직 모르므로 수정 API에서만 적용) |
 | `emp_status` 등록 시 서버 강제 `ACTIVE` | `EmployeeCreate` 스키마에 `emp_status` 필드 자체를 두지 않음(클라이언트가 값을 보내도 무시) |
 | `emp_status` 값·전이 | §4 상태 전이 패턴 참고 |
+
+> **참고 — 스펙보다 엄격한 예외**: 이 프로젝트에서는 사용자 요청에 따라 `emp_no`(`^A\d{4}$`)와 `phone`(하이픈 없는 숫자 9~11자리)에 스펙 §4보다 엄격한 정규식 검증을 승인받아 추가했다(`docs/internal/progress-checklist.md` "스펙 범위 밖 별도 확장" 참고). 이런 예외는 **반드시 사용자 승인 후, 문서에 근거를 남기고** 추가한다 — 위 원칙("스펙에 없는 검증을 임의로 추가하지 않는다")의 예외 사례로 취급한다.
+>
+> **참고 — Pydantic v2 커스텀 validator 에러 메시지**: `field_validator`에서 `raise ValueError(msg)`를 하면 Pydantic이 자동으로 `"Value error, "` 접두사를 붙인다. 화면에 한글 메시지만 깔끔하게 보여주려면 라우터에서 `err["msg"].removeprefix("Value error, ")`로 벗겨낸다.
 
 ## 4. 상태 전이 패턴 (F-04)
 스펙 §2의 허용 전이(`ACTIVE ⇄ LEAVE`, `(ACTIVE|LEAVE) → RESIGNED`, `RESIGNED`는 터미널)를 단일 상수로 관리한다.
