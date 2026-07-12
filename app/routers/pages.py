@@ -17,6 +17,10 @@ from app.templating import templates
 router = APIRouter()
 
 
+def _validation_errors(exc: ValidationError) -> dict[str, str]:
+    return {str(err["loc"][0]): err["msg"].removeprefix("Value error, ") for err in exc.errors()}
+
+
 def _optional_int(value: str | None) -> int | None:
     return int(value) if value else None
 
@@ -140,7 +144,7 @@ async def employee_register_submit(
     try:
         payload = EmployeeCreate(**_employee_form_fields(form))
     except ValidationError as e:
-        errors = {str(err["loc"][0]): err["msg"] for err in e.errors()}
+        errors = _validation_errors(e)
         return templates.TemplateResponse(
             request,
             "employees/register.html",
@@ -217,7 +221,7 @@ async def employee_update_submit(
     try:
         payload = EmployeeUpdate(**_employee_form_fields(form))
     except ValidationError as e:
-        errors = {str(err["loc"][0]): err["msg"] for err in e.errors()}
+        errors = _validation_errors(e)
         return _render_error(errors)
 
     try:
