@@ -62,7 +62,7 @@ h2 {
     gap: var(--space-4);
 }
 
-.nav-brand {
+.nav a.nav-brand {
     color: #fff;
     font-weight: 700;
     margin-right: var(--space-4);
@@ -85,8 +85,12 @@ h2 {
     margin-left: auto;
 }
 
-.nav-logout-form {
+.nav-auth-form {
     display: inline;
+}
+
+.nav-login-link {
+    margin-left: auto;
 }
 
 .nav-link-button {
