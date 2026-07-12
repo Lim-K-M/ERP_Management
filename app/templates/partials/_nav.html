@@ -1,5 +1,13 @@
 <nav class="nav">
-    <span class="nav-brand">ERP 직원관리</span>
+    <a href="/employees" class="nav-brand">ERP 직원관리</a>
     <a href="/employees">직원 목록</a>
+    {% if is_logged_in(request) %}
     <a href="/employees/new">직원 등록</a>
+    <span class="nav-user">{{ request.session.user }}님</span>
+    <form method="post" action="/logout" class="nav-auth-form">
+        <button type="submit" class="nav-link-button">로그아웃</button>
+    </form>
+    {% else %}
+    <a href="/login" class="nav-link-button nav-login-link">로그인</a>
+    {% endif %}
 </nav>

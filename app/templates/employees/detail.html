@@ -8,9 +8,11 @@
     </div>
 </div>
 
+{% if is_logged_in(request) %}
 <div class="status-actions">
     {% for status in next_statuses %}
-    <form method="post" action="/employees/{{ employee.emp_id }}/status" class="status-form">
+    <form method="post" action="/employees/{{ employee.emp_id }}/status" class="status-form"
+        {% if status == 'RESIGNED' %}onsubmit="return confirm('더 이상 상태를 변경할 수 없습니다. 계속 진행하시겠습니까?');"{% endif %}>
         <input type="hidden" name="emp_status" value="{{ status }}">
         <button type="submit" class="btn {% if status == 'ACTIVE' %}btn-outline-success{% elif status == 'LEAVE' %}btn-outline-warning{% else %}btn-outline-danger{% endif %}">
             {{ status | status_badge }}로 변경
@@ -25,4 +27,21 @@
     <h2>정보 수정</h2>
     {% include "employees/_form.html" %}
 </div>
+{% else %}
+<p class="muted">상태 변경 및 정보 수정은 로그인 후 이용할 수 있습니다. <a href="/login?next=/employees/{{ employee.emp_id }}">로그인</a></p>
+<div class="card">
+    <h2>기본 정보</h2>
+    <dl class="detail-readonly">
+        <dt>이메일</dt><dd>{{ employee.email or "-" }}</dd>
+        <dt>전화번호</dt><dd>{{ employee.phone or "-" }}</dd>
+        <dt>입사일</dt><dd>{{ employee.hire_date }}</dd>
+        <dt>부서</dt><dd>{{ employee.dept_name or "-" }}</dd>
+        <dt>직급</dt><dd>{{ employee.position_name or "-" }}</dd>
+    </dl>
+</div>
+{% endif %}
+
+{% if request.query_params.get('saved') %}
+<script>alert('저장되었습니다.');</script>
+{% endif %}
 {% endblock %}

@@ -7,3 +7,4 @@ pydantic-settings
 pydantic[email]
 jinja2
 python-multipart
+itsdangerous

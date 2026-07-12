@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.auth import require_login, verify_credentials
 from app.core.constants import next_allowed_statuses
 from app.core.exceptions import EmployeeNotFoundError, EmployeeValidationError, InvalidTransitionError
 from app.db.session import get_session
@@ -14,6 +15,10 @@ from app.services.employee_service import DEFAULT_SORT, SORT_COLUMNS
 from app.templating import templates
 
 router = APIRouter()
+
+
+def _validation_errors(exc: ValidationError) -> dict[str, str]:
+    return {str(err["loc"][0]): err["msg"].removeprefix("Value error, ") for err in exc.errors()}
 
 
 def _optional_int(value: str | None) -> int | None:
@@ -42,6 +47,36 @@ def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str
         links[column] = "/employees?" + urlencode({**base_query, "sort": column, "order": next_order})
         states[column] = order if sort == column else None
     return links, states
+
+
+@router.get("/login")
+async def login_page(request: Request, next: str = "/employees"):
+    return templates.TemplateResponse(request, "login.html", {"error": None, "next": next})
+
+
+@router.post("/login")
+async def login_submit(request: Request):
+    form = await request.form()
+    username = form.get("username", "")
+    password = form.get("password", "")
+    next_url = form.get("next") or "/employees"
+
+    if verify_credentials(username, password):
+        request.session["user"] = username
+        return RedirectResponse(next_url, status_code=303)
+
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {"error": "아이디 또는 비밀번호가 올바르지 않습니다.", "next": next_url},
+        status_code=401,
+    )
+
+
+@router.post("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    return RedirectResponse("/employees", status_code=303)
 
 
 @router.get("/employees")
@@ -86,7 +121,9 @@ async def employee_list_page(
 
 
 @router.get("/employees/new")
-async def employee_register_page(request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_register_page(
+    request: Request, session: AsyncSession = Depends(get_session), user: str = Depends(require_login)
+):
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
     return templates.TemplateResponse(
@@ -97,7 +134,9 @@ async def employee_register_page(request: Request, session: AsyncSession = Depen
 
 
 @router.post("/employees/new")
-async def employee_register_submit(request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_register_submit(
+    request: Request, session: AsyncSession = Depends(get_session), user: str = Depends(require_login)
+):
     form = await request.form()
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
@@ -105,7 +144,7 @@ async def employee_register_submit(request: Request, session: AsyncSession = Dep
     try:
         payload = EmployeeCreate(**_employee_form_fields(form))
     except ValidationError as e:
-        errors = {str(err["loc"][0]): err["msg"] for err in e.errors()}
+        errors = _validation_errors(e)
         return templates.TemplateResponse(
             request,
             "employees/register.html",
@@ -149,7 +188,12 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
 
 
 @router.post("/employees/{emp_id}")
-async def employee_update_submit(emp_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_update_submit(
+    emp_id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login),
+):
     try:
         employee = await employee_service.get_employee(session, emp_id)
     except EmployeeNotFoundError as e:
@@ -177,7 +221,7 @@ async def employee_update_submit(emp_id: int, request: Request, session: AsyncSe
     try:
         payload = EmployeeUpdate(**_employee_form_fields(form))
     except ValidationError as e:
-        errors = {str(err["loc"][0]): err["msg"] for err in e.errors()}
+        errors = _validation_errors(e)
         return _render_error(errors)
 
     try:
@@ -185,11 +229,16 @@ async def employee_update_submit(emp_id: int, request: Request, session: AsyncSe
     except EmployeeValidationError as e:
         return _render_error(e.errors)
 
-    return RedirectResponse(f"/employees/{emp_id}", status_code=303)
+    return RedirectResponse(f"/employees/{emp_id}?saved=1", status_code=303)
 
 
 @router.post("/employees/{emp_id}/status")
-async def employee_status_submit(emp_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_status_submit(
+    emp_id: int,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+    user: str = Depends(require_login),
+):
     form = await request.form()
     target_status = form.get("emp_status", "")
 

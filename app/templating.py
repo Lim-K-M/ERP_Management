@@ -15,5 +15,10 @@ def status_badge(value: str) -> Markup:
     return Markup(f'<span class="badge {meta["class"]}">{meta["label"]}</span>')
 
 
+def is_logged_in(request) -> bool:
+    return bool(request.session.get("user"))
+
+
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 templates.env.filters["status_badge"] = status_badge
+templates.env.globals["is_logged_in"] = is_logged_in
