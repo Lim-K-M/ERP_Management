@@ -89,7 +89,7 @@
                         <th><a href="{{ sort_links.emp_name }}" class="sort-link">이름 <span class="sort-arrow {% if sort_state.emp_name %}sort-arrow-active{% endif %}">{% if sort_state.emp_name == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
                         <th><a href="{{ sort_links.dept_name }}" class="sort-link">부서 <span class="sort-arrow {% if sort_state.dept_name %}sort-arrow-active{% endif %}">{% if sort_state.dept_name == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
                         <th><a href="{{ sort_links.position_name }}" class="sort-link">직급 <span class="sort-arrow {% if sort_state.position_name %}sort-arrow-active{% endif %}">{% if sort_state.position_name == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
-                        <th>입사일</th>
+                        <th><a href="{{ sort_links.hire_date }}" class="sort-link">입사일 <span class="sort-arrow {% if sort_state.hire_date %}sort-arrow-active{% endif %}">{% if sort_state.hire_date == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
                         <th><a href="{{ sort_links.emp_status }}" class="sort-link">상태 <span class="sort-arrow {% if sort_state.emp_status %}sort-arrow-active{% endif %}">{% if sort_state.emp_status == "desc" %}▼{% else %}▲{% endif %}</span></a></th>
                     </tr>
                 </thead>
