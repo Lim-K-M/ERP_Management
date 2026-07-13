@@ -168,4 +168,6 @@ const prisma = basePrisma.$extends({
 > 시스템 작업은 예약된 시스템 계정의 `USER_ID`(또는 `null`)를 사용한다.
 
 ### 5.4 Repository 계층
-ORM이 Data Access Object 역할을 하므로 **별도 Repository 계층을 두지 않고 Service에서 Prisma Client를 직접 호출**한다. (`backend-service-architecture` §1-1)
+ORM이 Data Access Object 역할을 하므로 **별도 Repository 계층을 두지 않고 Service에서 ORM 클라이언트를 직접 호출**한다. (`fastapi-service-architecture` §2)
+
+> 이 섹션(5.1~5.4)은 Prisma Client Extension 예시로 작성되어 있다. 이 프로젝트(ERP_Management)는 Prisma 대신 **SQLAlchemy Core 리플렉션**을 쓰므로, `_BY` 주입 등 ORM 레이어 훅이 필요하면 Service 함수 내에서 직접 처리한다(Prisma Client Extension 같은 미들웨어 훅 메커니즘은 없음). 이 프로젝트는 인증이 없어 `_BY`를 NULL로 유지하므로 해당 없음.
