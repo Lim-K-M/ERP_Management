@@ -10,7 +10,7 @@ from app.services import employment_history_service
 
 STATUS_TO_CHANGE_TYPE = {"LEAVE": "LEAVE", "ACTIVE": "RETURN", "RESIGNED": "RESIGN"}
 
-SORT_COLUMNS = ("emp_no", "emp_name", "dept_name", "position_name", "emp_status")
+SORT_COLUMNS = ("emp_no", "emp_name", "dept_name", "position_name", "hire_date", "emp_status")
 DEFAULT_SORT = "emp_no"
 
 
@@ -73,6 +73,7 @@ async def list_employees(
         "emp_name": employee.c.emp_name,
         "dept_name": department.c.dept_name,
         "position_name": position.c.position_level,  # 이름 가나다순이 아니라 직급 서열 기준
+        "hire_date": employee.c.hire_date,
         "emp_status": employee.c.emp_status,
     }
     column = sort_columns.get(sort, employee.c.emp_no)
