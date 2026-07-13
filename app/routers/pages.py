@@ -174,9 +174,9 @@ async def employee_list_page(
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
     hire_years = await employee_service.list_hire_years(session)
-    status_counts = await employee_service.count_by_status(session)
-    dept_counts = await employee_service.count_by_department(session)
-    position_counts = await employee_service.count_by_position(session)
+    status_counts = await employee_service.count_by_status(session, filters)
+    dept_counts = await employee_service.count_by_department(session, filters)
+    position_counts = await employee_service.count_by_position(session, filters)
     sort_links, sort_state = _build_sort_links(request, sort, order)
 
     return templates.TemplateResponse(
