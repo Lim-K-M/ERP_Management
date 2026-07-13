@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import insert, select
+from sqlalchemy import func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.metadata import metadata
@@ -50,12 +50,26 @@ async def record_history(
     await session.execute(stmt)
 
 
-async def list_history(session: AsyncSession, emp_id: int):
+async def list_history(
+    session: AsyncSession,
+    emp_id: int,
+    page: int | None = None,
+    page_size: int | None = None,
+):
+    """emp_id의 이력을 발령일 오름차순(입사가 맨 위)으로 반환한다. page/page_size를 둘 다 주면 그 구간만 잘라 반환한다."""
     history = metadata.tables["t_employment_history"]
     stmt = (
         _history_select()
         .where(history.c.emp_id == emp_id)
         .order_by(history.c.effective_date.asc(), history.c.history_id.asc())
     )
+    if page is not None and page_size is not None:
+        stmt = stmt.limit(page_size).offset((page - 1) * page_size)
     result = await session.execute(stmt)
     return result.mappings().all()
+
+
+async def count_history(session: AsyncSession, emp_id: int) -> int:
+    history = metadata.tables["t_employment_history"]
+    stmt = select(func.count()).select_from(history).where(history.c.emp_id == emp_id)
+    return await session.scalar(stmt)

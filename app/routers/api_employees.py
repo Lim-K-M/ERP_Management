@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import ValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.auth import require_login_api
@@ -20,15 +21,22 @@ async def list_employees(
     hire_year: str | None = None,
     sort: str = DEFAULT_SORT,
     order: str = "asc",
-    page: int = 1,
-    page_size: int = 20,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
     session: AsyncSession = Depends(get_session),
 ):
     if sort not in SORT_COLUMNS:
         sort = DEFAULT_SORT
     if order not in ("asc", "desc"):
         order = "asc"
-    filters = EmployeeFilter(name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year)
+    try:
+        filters = EmployeeFilter(
+            name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year
+        )
+    except ValidationError as e:
+        raise HTTPException(
+            status_code=422, detail={str(err["loc"][0]): err["msg"] for err in e.errors()}
+        ) from e
     return await employee_service.list_employees(session, filters, sort=sort, order=order, page=page, page_size=page_size)
 
 

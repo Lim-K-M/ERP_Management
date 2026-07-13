@@ -209,3 +209,16 @@ spec §3 Bonus(인사 발령 이력 + 목록 페이지네이션)를 원 계획(T
 - **스킬 라우팅 수정**: `backend-service-architecture`/`frontend-ssr`(다른 프로젝트용, 미사용)를 아직도 "정답"으로 가리키던 라우팅 문서 4곳을 이 프로젝트의 실제 스킬로 교체 — `.claude/rules/development-workflow.md`(always-on 규칙의 도메인 스킬 목록), `.claude/skills/README.md`(전체 스킬 지도를 FastAPI/Jinja2/PostgreSQL 기준으로 재작성, `db-development-postgres`를 ③으로 명시적 편입), `code-review-standard/SKILL.md`(리뷰 체크리스트), `db-development-postgres/SKILL.md` + 상세 가이드(Prisma 연동 섹션을 SQLAlchemy Core 리플렉션 기준으로 재작성). 두 미사용 스킬 자체는 손대지 않고 "다른 프로젝트용, 참고 보존"으로 명확히 표시만 함
 - **사번 형식 재변경**: PR #15에서 `^A\d{4}$`(알파벳 A 고정)로 확정했던 사번 형식을, 사용자가 원본 근거(스펙/계획서/AI활용정리 어디에도 "A"나 "E" 고정 요구는 없었음을 함께 확인 후) "알파벳 상관없이 숫자 4자리로만"으로 재확정해 `^\d{4}$`로 변경(`app/schemas/employee.py`)
 - **실제 DB 연동 검증 완료**: 옛 형식(`A0001`) 등록 시도 422 확인, 새 형식(`0001`) 등록 201 확인, 자릿수 오류(`00001`) 422 확인. 기존 시드 데이터 100명의 사번(`E1001~E1100`)도 새 형식(`1001~1100`)으로 일괄 변경
+
+### 전체 재검토(4개 병렬 에이전트) + 버그 수정 + 인사발령 이력 페이지네이션 (2026-07-13)
+
+스펙 대조/데이터 무결성·보안/코드 정확성/문서-코드 정합성 4개 관점으로 프로젝트 전체를 처음부터 다시 검토(에이전트 병렬 실행). 실제로 500 에러를 내는 버그 3개와 오픈 리다이렉트 1개를 발견해 전부 수정:
+
+- **목록 필터 쿼리파라미터 미검증**(`dept_id`/`position_id`/`hire_year`에 숫자가 아닌 값) → `EmployeeFilter` 생성 실패가 그대로 500으로 새던 것을 `pages.py`/`api_employees.py` 양쪽에서 `ValidationError`를 잡아 422로 변환
+- **JSON API 페이지네이션 범위 미검증** → `page=0`/`page=-1`/`page_size=-5`가 Postgres `OFFSET/LIMIT must not be negative`로 500이 나던 것을, `Query(ge=1)`/`Query(ge=1, le=100)`으로 FastAPI 레벨에서 422 처리(HTML 목록 라우트는 원래도 clamp돼 있어 안전했음 — API만 누락)
+- **폼 등록/수정 시 정수 변환 미검증** → `_optional_int()`가 `int(value)`를 그냥 호출해 `ValueError`가 그대로 새던 것을, 실패 시 `EmployeeValidationError`를 던지도록 바꾸고 등록/수정 라우트에서 함께 처리
+- **로그인 `next` 파라미터 오픈 리다이렉트** → `_safe_next_url()`로 이 앱 내부의 상대 경로(`/`로 시작, `//`·`/\`로 시작하지 않음)만 허용하도록 검증 추가. `/login`이 next 값을 렌더링할 때와 로그인 성공 후 리다이렉트할 때 모두 적용
+
+**인사발령 이력 페이지네이션 추가**(요청사항): `employment_history_service.list_history()`가 `page`/`page_size`를 받아 구간 조회하도록 확장, `count_history()` 신규 추가. 상세 페이지에서 이력이 5건 초과일 때만 목록과 동일한 스타일의 페이지네이션 컨트롤 노출.
+
+**실제 DB 연동 검증 완료**: 위 4개 버그 전부 수정 전(500)/수정 후(422 또는 정상 리다이렉트) 재현 확인. 이력 4건(페이지네이션 없음) → 6건으로 늘려 페이지네이션 등장 + 2페이지에 남은 1건 정확히 표시되는 것 확인 후 테스트 이력 삭제.

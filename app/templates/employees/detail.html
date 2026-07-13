@@ -71,6 +71,24 @@
             </tbody>
         </table>
     </div>
+    {% if history_total_pages > 1 %}
+    <nav class="pagination">
+        {% if history_current_page > 1 %}<a href="{{ history_page_link(history_current_page - 1) }}" class="btn btn-outline">이전</a>{% endif %}
+        <span class="pagination-numbers">
+            {% for p in history_page_numbers %}
+                {% if p is none %}
+                <span class="pagination-ellipsis">…</span>
+                {% elif p == history_current_page %}
+                <span class="pagination-number pagination-number-active">{{ p }}</span>
+                {% else %}
+                <a href="{{ history_page_link(p) }}" class="pagination-number">{{ p }}</a>
+                {% endif %}
+            {% endfor %}
+        </span>
+        {% if history_current_page < history_total_pages %}<a href="{{ history_page_link(history_current_page + 1) }}" class="btn btn-outline">다음</a>{% endif %}
+    </nav>
+    <p class="pagination-status">전체 {{ history_total_count }}건 · {{ history_current_page }} / {{ history_total_pages }} 페이지</p>
+    {% endif %}
 </div>
 
 {% if request.query_params.get('saved') %}
