@@ -214,13 +214,41 @@ h2 {
     color: var(--color-text-muted);
 }
 
-/* ---- 부서/직급/상태별 인원 수 토글 버튼 ---- */
+/* ---- 상태별 인원 수 (항상 표시) + 부서/직급별 인원 수 토글 버튼 ---- */
 .count-toggles {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: var(--space-3);
     margin-bottom: var(--space-4);
 }
+
+.status-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.status-chip strong {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.status-chip-active strong { color: var(--color-success); }
+.status-chip-leave strong { color: var(--color-warning); }
+.status-chip-resigned strong { color: var(--color-danger); }
 
 .count-popover {
     position: relative;
@@ -254,6 +282,11 @@ h2 {
     padding: var(--space-3) var(--space-4);
 }
 
+.count-popover-right .count-panel {
+    top: 0;
+    left: calc(100% + var(--space-2));
+}
+
 .count-panel ul {
     list-style: none;
     margin: 0;
@@ -282,10 +315,6 @@ h2 {
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
-
-.count-panel li.count-active strong { color: var(--color-success); }
-.count-panel li.count-leave strong { color: var(--color-warning); }
-.count-panel li.count-resigned strong { color: var(--color-danger); }
 
 @media (max-width: 768px) {
     .list-layout {
