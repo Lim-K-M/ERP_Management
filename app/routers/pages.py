@@ -24,26 +24,34 @@ def _validation_errors(exc: ValidationError) -> dict[str, str]:
     return {str(err["loc"][0]): err["msg"].removeprefix("Value error, ") for err in exc.errors()}
 
 
-def _optional_int(value: str | None, field: str) -> int | None:
-    if not value:
-        return None
-    try:
-        return int(value)
-    except ValueError:
-        raise EmployeeValidationError({field: "숫자만 입력해주세요."}) from None
+def _optional_int(value: str | None) -> int | None:
+    return int(value) if value else None
 
 
 def _employee_form_fields(form) -> dict:
-    return {
+    fields = {
         "emp_no": form.get("emp_no", ""),
         "emp_name": form.get("emp_name", ""),
         "email": form.get("email") or None,
         "phone": form.get("phone") or None,
         "hire_date": form.get("hire_date"),
-        "dept_id": _optional_int(form.get("dept_id"), "dept_id"),
-        "position_id": _optional_int(form.get("position_id"), "position_id"),
-        "manager_id": _optional_int(form.get("manager_id"), "manager_id"),
     }
+    errors: dict[str, str] = {}
+    for key in ("dept_id", "position_id", "manager_id"):
+        try:
+            fields[key] = _optional_int(form.get(key))
+        except ValueError:
+            errors[key] = "숫자만 입력해주세요."
+    if errors:
+        raise EmployeeValidationError(errors)
+    return fields
+
+
+def _query_page(request: Request) -> int:
+    try:
+        return max(1, int(request.query_params.get("page", 1)))
+    except ValueError:
+        return 1
 
 
 def _safe_next_url(value: str | None) -> str:
@@ -285,9 +293,10 @@ async def employee_update_submit(
     form = await request.form()
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
-    history_ctx = await _history_pagination(session, emp_id, 1)
 
-    def _render_error(errors: dict[str, str]):
+    async def _render_error(errors: dict[str, str]):
+        # 실패했을 때만 이력을 조회한다 - 성공(리다이렉트) 경로에서는 불필요한 쿼리를 피한다.
+        history_ctx = await _history_pagination(session, emp_id, _query_page(request))
         return templates.TemplateResponse(
             request,
             "employees/detail.html",
@@ -306,15 +315,15 @@ async def employee_update_submit(
     try:
         payload = EmployeeUpdate(**_employee_form_fields(form))
     except EmployeeValidationError as e:
-        return _render_error(e.errors)
+        return await _render_error(e.errors)
     except ValidationError as e:
         errors = _validation_errors(e)
-        return _render_error(errors)
+        return await _render_error(errors)
 
     try:
         await employee_service.update_employee(session, emp_id, payload)
     except EmployeeValidationError as e:
-        return _render_error(e.errors)
+        return await _render_error(e.errors)
 
     return RedirectResponse(f"/employees/{emp_id}?saved=1", status_code=303)
 
