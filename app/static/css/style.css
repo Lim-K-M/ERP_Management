@@ -110,7 +110,7 @@ h2 {
 }
 
 .container {
-    max-width: 1040px;
+    max-width: 1180px;
     margin: 0 auto;
     padding: var(--space-6);
 }
@@ -176,15 +176,25 @@ h2 {
 
 /* ---- 브랜드 배너 (로고 자리) ---- */
 .brand-banner {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: var(--space-3);
+    gap: var(--space-4);
     padding: var(--space-4) var(--space-6);
     background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
     margin-bottom: var(--space-4);
+}
+
+.brand-identity {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    justify-self: start;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 
 .brand-mark {
@@ -214,6 +224,81 @@ h2 {
     color: var(--color-text-muted);
 }
 
+/* ---- 브랜드 배너 안 인원 수 (표 헤더 정렬 기준 컬럼에 맞춰 전환, 박스 가운데 배치) ---- */
+.brand-counts {
+    grid-column: 2;
+    justify-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding-left: var(--space-6);
+    border-left: 1px solid var(--color-border);
+}
+
+.brand-counts-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-primary);
+}
+
+.brand-counts-label::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-primary);
+}
+
+.brand-counts-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+}
+
+.brand-count-item {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4em;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    font-size: 0.86rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.brand-count-item strong {
+    color: var(--color-text);
+    font-weight: 700;
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.brand-count-item.count-active {
+    background: rgba(22, 163, 74, 0.08);
+    border-color: rgba(22, 163, 74, 0.3);
+}
+.brand-count-item.count-leave {
+    background: rgba(217, 119, 6, 0.08);
+    border-color: rgba(217, 119, 6, 0.3);
+}
+.brand-count-item.count-resigned {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.3);
+}
+
+.brand-count-item.count-active strong { color: var(--color-success); }
+.brand-count-item.count-leave strong { color: var(--color-warning); }
+.brand-count-item.count-resigned strong { color: var(--color-danger); }
+
 @media (max-width: 768px) {
     .list-layout {
         flex-direction: column;
@@ -227,6 +312,19 @@ h2 {
         position: static;
         max-height: none;
         overflow-y: visible;
+    }
+
+    .brand-banner {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        text-align: center;
+    }
+
+    .brand-counts {
+        border-left: none;
+        border-top: 1px solid var(--color-border);
+        padding-left: 0;
+        padding-top: var(--space-3);
     }
 }
 
