@@ -89,6 +89,35 @@ async def count_employees(session: AsyncSession, filters: EmployeeFilter | None 
     return await session.scalar(stmt)
 
 
+async def count_by_status(session: AsyncSession) -> dict[str, int]:
+    employee = metadata.tables["t_employee"]
+    stmt = select(employee.c.emp_status, func.count()).group_by(employee.c.emp_status)
+    result = await session.execute(stmt)
+    return {row[0]: row[1] for row in result}
+
+
+async def count_by_department(session: AsyncSession) -> dict[int, int]:
+    employee = metadata.tables["t_employee"]
+    stmt = (
+        select(employee.c.dept_id, func.count())
+        .where(employee.c.dept_id.is_not(None))
+        .group_by(employee.c.dept_id)
+    )
+    result = await session.execute(stmt)
+    return {row[0]: row[1] for row in result}
+
+
+async def count_by_position(session: AsyncSession) -> dict[int, int]:
+    employee = metadata.tables["t_employee"]
+    stmt = (
+        select(employee.c.position_id, func.count())
+        .where(employee.c.position_id.is_not(None))
+        .group_by(employee.c.position_id)
+    )
+    result = await session.execute(stmt)
+    return {row[0]: row[1] for row in result}
+
+
 async def list_hire_years(session: AsyncSession) -> list[int]:
     employee = metadata.tables["t_employee"]
     year_col = extract("year", employee.c.hire_date)

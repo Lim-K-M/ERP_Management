@@ -214,6 +214,30 @@ h2 {
     color: var(--color-text-muted);
 }
 
+/* ---- 목록 통계 요약 (전체/상태별 인원 수) ---- */
+.list-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-6);
+    padding: var(--space-3) var(--space-6);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-4);
+    font-size: 0.88rem;
+    color: var(--color-text-muted);
+}
+
+.list-stats .stat-item strong {
+    color: var(--color-text);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.list-stats .stat-item:nth-child(2) strong { color: var(--color-success); }
+.list-stats .stat-item:nth-child(3) strong { color: var(--color-warning); }
+.list-stats .stat-item:nth-child(4) strong { color: var(--color-danger); }
+
 @media (max-width: 768px) {
     .list-layout {
         flex-direction: column;

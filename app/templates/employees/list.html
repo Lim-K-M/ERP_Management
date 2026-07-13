@@ -22,25 +22,25 @@
 
             <label class="filter-label" for="f-status">상태</label>
             <select id="f-status" name="status" onchange="this.form.submit()">
-                <option value="">전체</option>
-                <option value="ACTIVE" {% if filters.status == "ACTIVE" %}selected{% endif %}>재직</option>
-                <option value="LEAVE" {% if filters.status == "LEAVE" %}selected{% endif %}>휴직</option>
-                <option value="RESIGNED" {% if filters.status == "RESIGNED" %}selected{% endif %}>퇴직</option>
+                <option value="">전체 ({{ total_employee_count }})</option>
+                <option value="ACTIVE" {% if filters.status == "ACTIVE" %}selected{% endif %}>재직 ({{ status_counts.get("ACTIVE", 0) }})</option>
+                <option value="LEAVE" {% if filters.status == "LEAVE" %}selected{% endif %}>휴직 ({{ status_counts.get("LEAVE", 0) }})</option>
+                <option value="RESIGNED" {% if filters.status == "RESIGNED" %}selected{% endif %}>퇴직 ({{ status_counts.get("RESIGNED", 0) }})</option>
             </select>
 
             <label class="filter-label" for="f-position">직급</label>
             <select id="f-position" name="position_id" onchange="this.form.submit()">
-                <option value="">전체</option>
+                <option value="">전체 ({{ total_employee_count }})</option>
                 {% for p in positions %}
-                <option value="{{ p.position_id }}" {% if filters.position_id == p.position_id %}selected{% endif %}>{{ p.position_name }}</option>
+                <option value="{{ p.position_id }}" {% if filters.position_id == p.position_id %}selected{% endif %}>{{ p.position_name }} ({{ position_counts.get(p.position_id, 0) }})</option>
                 {% endfor %}
             </select>
 
             <label class="filter-label" for="f-dept">부서</label>
             <select id="f-dept" name="dept_id" onchange="this.form.submit()">
-                <option value="">전체</option>
+                <option value="">전체 ({{ total_employee_count }})</option>
                 {% for d in departments %}
-                <option value="{{ d.dept_id }}" {% if filters.dept_id == d.dept_id %}selected{% endif %}>{{ d.dept_name }}</option>
+                <option value="{{ d.dept_id }}" {% if filters.dept_id == d.dept_id %}selected{% endif %}>{{ d.dept_name }} ({{ dept_counts.get(d.dept_id, 0) }})</option>
                 {% endfor %}
             </select>
 
@@ -55,6 +55,12 @@
         <div class="brand-banner">
             <div class="brand-mark">ERP</div>
             <div class="brand-name">ERP Management<span class="brand-sub">직원관리 시스템</span></div>
+        </div>
+        <div class="list-stats">
+            <span class="stat-item">전체 <strong>{{ total_employee_count }}</strong>명</span>
+            <span class="stat-item">재직 <strong>{{ status_counts.get("ACTIVE", 0) }}</strong></span>
+            <span class="stat-item">휴직 <strong>{{ status_counts.get("LEAVE", 0) }}</strong></span>
+            <span class="stat-item">퇴직 <strong>{{ status_counts.get("RESIGNED", 0) }}</strong></span>
         </div>
         <div class="table-wrap">
             <table class="employee-table">
