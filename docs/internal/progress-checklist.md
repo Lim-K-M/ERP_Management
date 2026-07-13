@@ -7,7 +7,7 @@
 - [x] `docs/plans/`에 계획서 작성 (범위·파일·검증법) — `docs/plans/2026-07-08-employee-management-plan.md`
 - [x] 승인받고 구현을 시작했다 — Plan Mode 승인 완료 (2026-07-08)
 - [x] `ERP_<역할>` 브랜치에서 작업했다 — `main` 직접 커밋 금지 규칙에 따라 `ERP_initial_setup`부터 브랜치 사용
-- [x] 커밋을 의미 단위로 나눴다 — 전체 60개 커밋, 18개 PR로 기능/문서 단위 분리(아래 "최종 PR 목록" 참고). 중간에 실수로 `main`에 직접 커밋한 1건은 즉시 브랜치로 옮기고 `main`을 원복해 규칙을 회복했다.
+- [x] 커밋을 의미 단위로 나눴다 — 전체 24개 PR로 기능/문서 단위 분리(아래 "최종 PR 목록" 참고). 중간에 실수로 `main`에 직접 커밋한 1건은 즉시 브랜치로 옮기고 `main`을 원복해 규칙을 회복했다.
 
 ## 기능 완성
 - [x] 목록에 주요 필드 + 상태가 함께 보인다 (F-01) — 실제 DB로 검증 완료
@@ -34,6 +34,11 @@
 | `ERP_employee_integrity_and_sort` | 무결성 리뷰 반영(순환참조/레이스컨디션/퇴직자매니저/사번대소문자/부서필터빈값버그) + 목록 정렬(사번/이름/부서/직급/상태) | 완료, 실제 DB로 검증 완료 |
 | `feature/employment-history` | 인사발령 이력 bonus(선택) — HIRE/TRANSFER/PROMOTION/LEAVE/RETURN/RESIGN 전체 기록·조회 + 목록 페이지네이션(20명/페이지) | 완료, 실제 DB로 검증 완료(계획서: `docs/plans/2026-07-12-employment-history-bonus-plan.md`) |
 | `feature/employee-login-auth` | 로그인 보호(스펙 범위 밖 별도 확장) — 세션 로그인, 등록/수정/상태변경만 보호, 조회는 그대로 공개 | 완료, 실제 DB/브라우저로 검증 완료 |
+| `feature/docs-requirements-check`, `feature/docs-screenshots` | 요구사항 대조 문서, 결과화면 스크린샷 | 완료, main 병합 |
+| `fix/emp-no-pattern-and-page-numbers` | 사번 형식 버그 수정(1차: `^A\d{4}$`) + 페이지 번호 네비게이션 | 완료, main 병합 |
+| `docs/screenshots-refresh`, `docs/ai-usage-summary`, `docs/skills-final-review`, `docs/final-pr-summary`, `docs/skills-second-pass-review`, `docs/requirements-checklist-final` | 스크린샷 재교체, AI 활용 정리, 스킬/PR 목록 최종 점검 문서 | 완료, main 병합 |
+| `docs/skill-routing-and-emp-no-fix` | 스킬 라우팅 문서 4곳을 이 프로젝트 실제 스킬로 교체 + 사번 형식 2차 변경(`^\d{4}$`, 숫자만) + 스크린샷 재캡처 | 완료, main 병합 |
+| `fix/query-validation-and-history-pagination` | 4개 관점 병렬 재검토에서 발견한 500 에러 3건·오픈 리다이렉트 수정 + 인사발령 이력 페이지네이션 추가 | 완료, main 병합 |
 
 ## 요구사항 정의서 대조 결과 (2026-07-12)
 
@@ -61,7 +66,7 @@
 - **사번/이메일/전화번호 형식 검증 강화**: `docs/specs/` §4는 `emp_no`를 "필수, 최대 20자, 고유", `phone`을 "선택, 최대 20자"로만 규정하고 패턴을 요구하지 않는다. 사용자 요청에 따라 `emp_no`는 `^\d{4}$`(숫자 4자리, 예: `0001`), `phone`은 하이픈 없는 숫자 9~11자리로 스펙보다 엄격하게 제한했다(`app/schemas/employee.py`). **주의**: 마감 제출물을 스펙 §4 기준으로만 평가할 경우, 이 형식과 다른 사번/전화번호 테스트 데이터는 422로 거부된다 — 스펙에 없는 제약이니 평가자에게 별도 확장임을 설명하거나 필요 시 완화 검토.
   - **변경 이력**: 처음엔 `^A\d{4}$`(알파벳 A 고정)였다가, 2026-07-13에 사용자가 "알파벳 상관없이 숫자 4자리로만"으로 재확정해 `^\d{4}$`로 변경했다.
 
-## 최종 PR 목록 (2026-07-12 기준, 총 18개 · 전부 main 병합 완료)
+## 최종 PR 목록 (2026-07-13 기준, 총 24개 · 전부 main 병합 완료)
 
 | PR | 제목 | 분류 |
 |---|---|---|
@@ -79,10 +84,17 @@
 | #12 | feat(history): 인사발령 이력(bonus) + 목록 페이지네이션 | Bonus |
 | #13 | docs: 요구사항 정의서 §1~§7 전 항목 대조 결과 | 제출물 정리 |
 | #14 | docs: 결과화면 스크린샷 추가 | 제출물 정리 |
-| #15 | fix: 사번 형식 A 고정 + 페이지 번호 네비게이션 추가 | 버그 수정 |
+| #15 | fix: 사번 형식 A 고정(1차, 이후 #23에서 숫자만으로 재변경) + 페이지 번호 네비게이션 추가 | 버그 수정 |
 | #16 | docs: 최신 스크린샷으로 교체 (PR #14/#15 merge 순서 이슈 수정) | 제출물 정리 |
 | #17 | docs: AI 활용 정리 문서 작성 | 제출물 정리 |
 | #18 | docs(skills): 신규 스킬 2개 최종 점검 | 제출물 정리 |
+| #19 | docs: 최종 PR 목록/커밋 로그 정리 | 제출물 정리 |
+| #20 | docs(readme): 브랜치별 구현 로그 최신화 + 로그인 계정 안내 | 제출물 정리 |
+| #21 | docs(skills): 처음부터 다시 점검해 발견한 추가 불일치 수정 | 제출물 정리 |
+| #22 | docs: 최종 요구사항 체크리스트 문서화 | 제출물 정리 |
+| #23 | docs(skills): 스킬 라우팅 수정 + fix(employee): 사번 형식 재변경(숫자 4자리) | 버그 수정 |
+| #24 | fix: 쿼리 검증 500 에러 3건 + 오픈 리다이렉트 수정, 인사발령 이력 페이지네이션 추가 | 버그 수정 |
 
-- 커밋 로그 전체(60개 커밋)는 `git log --oneline main`으로 확인 가능. Conventional Commits(`feat`/`fix`/`docs`/`chore`) 형식 유지.
+- 커밋 로그 전체는 `git log --oneline main`으로 확인 가능. Conventional Commits(`feat`/`fix`/`docs`/`chore`) 형식 유지.
 - 관련 계획서: `docs/plans/2026-07-08-employee-management-plan.md`(기본 계획), `docs/plans/2026-07-12-employee-login-auth-plan.md`, `docs/plans/2026-07-12-employment-history-bonus-plan.md`.
+- 2026-07-13: 다른 PC 세션에서 병합된 PR #11~#22 이후, 스펙 대조/데이터 무결성·보안/코드 정확성/문서 정합성 4개 관점 병렬 재검토를 진행해 실제 500 에러 3건과 오픈 리다이렉트 1건을 추가로 발견·수정(#24), 스킬 문서가 이 프로젝트 스택을 가리키지 않던 문제와 사번 형식을 최종 확정(#23)했다.
