@@ -53,40 +53,33 @@
 
     <div class="list-main">
         <div class="brand-banner">
-            <div class="brand-mark">ERP</div>
-            <div class="brand-name">ERP Management<span class="brand-sub">직원관리 시스템</span></div>
-        </div>
-        <div class="count-toggles">
-            <details class="count-popover count-popover-right" open>
-                <summary class="btn btn-outline">상태별 인원</summary>
-                <div class="count-panel">
-                    <ul>
-                        <li class="count-active"><span>재직</span><strong>{{ status_counts.get("ACTIVE", 0) }}</strong></li>
-                        <li class="count-leave"><span>휴직</span><strong>{{ status_counts.get("LEAVE", 0) }}</strong></li>
-                        <li class="count-resigned"><span>퇴직</span><strong>{{ status_counts.get("RESIGNED", 0) }}</strong></li>
-                    </ul>
-                </div>
-            </details>
-            <details class="count-popover count-popover-right">
-                <summary class="btn btn-outline">직급별 인원</summary>
-                <div class="count-panel">
-                    <ul>
-                        {% for p in positions %}
-                        <li><span>{{ p.position_name }}</span><strong>{{ position_counts.get(p.position_id, 0) }}</strong></li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </details>
-            <details class="count-popover count-popover-right">
-                <summary class="btn btn-outline">부서별 인원</summary>
-                <div class="count-panel">
-                    <ul>
+            <div class="brand-identity">
+                <div class="brand-mark">ERP</div>
+                <div class="brand-name">ERP Management<span class="brand-sub">직원관리 시스템</span></div>
+            </div>
+            <div class="brand-counts">
+                <span class="brand-counts-label">
+                    {% if current_sort == "dept_name" %}부서별 인원
+                    {% elif current_sort == "position_name" %}직급별 인원
+                    {% else %}상태별 인원
+                    {% endif %}
+                </span>
+                <div class="brand-counts-list">
+                    {% if current_sort == "dept_name" %}
                         {% for d in departments %}
-                        <li><span>{{ d.dept_name }}</span><strong>{{ dept_counts.get(d.dept_id, 0) }}</strong></li>
+                        <span class="brand-count-item">{{ d.dept_name }} <strong>{{ dept_counts.get(d.dept_id, 0) }}</strong></span>
                         {% endfor %}
-                    </ul>
+                    {% elif current_sort == "position_name" %}
+                        {% for p in positions %}
+                        <span class="brand-count-item">{{ p.position_name }} <strong>{{ position_counts.get(p.position_id, 0) }}</strong></span>
+                        {% endfor %}
+                    {% else %}
+                        <span class="brand-count-item count-active">재직 <strong>{{ status_counts.get("ACTIVE", 0) }}</strong></span>
+                        <span class="brand-count-item count-leave">휴직 <strong>{{ status_counts.get("LEAVE", 0) }}</strong></span>
+                        <span class="brand-count-item count-resigned">퇴직 <strong>{{ status_counts.get("RESIGNED", 0) }}</strong></span>
+                    {% endif %}
                 </div>
-            </details>
+            </div>
         </div>
         <div class="table-wrap">
             <table class="employee-table">
@@ -136,18 +129,4 @@
         <p class="pagination-status">전체 {{ total_count }}명 · {{ current_page }} / {{ total_pages }} 페이지</p>
     </div>
 </div>
-<script>
-(function () {
-    var toggles = document.querySelectorAll(".count-toggles > details.count-popover");
-    toggles.forEach(function (el) {
-        var summary = el.querySelector("summary");
-        summary.addEventListener("click", function (e) {
-            e.preventDefault();
-            var wasOpen = el.open;
-            toggles.forEach(function (other) { other.open = false; });
-            el.open = !wasOpen;
-        });
-    });
-})();
-</script>
 {% endblock %}
