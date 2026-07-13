@@ -37,9 +37,9 @@ description: PR/변경 diff를 리뷰할 때 따르는 프로젝트 코드리뷰
 
 ### 4. 프로젝트 컨벤션 준수 (도메인 스킬이 진실)
 변경 영역에 해당하는 스킬 기준으로 본다:
-- [ ] **백엔드**: 계층 분리(Controller=검증, Service=순수 로직), JSON Envelope 응답, 엔트리(`server/server.js`) 미들웨어 순서 — `backend-service-architecture`
-- [ ] **데이터**: Oracle ORDS 호출은 `server/lib/axios-config.js` 프록시 경유, Bearer 토큰 서버 보관(브라우저 노출 금지), 외부 호출 타임아웃 — `backend-service-architecture`
-- [ ] **프론트**: 파편/slot 조립, `escapeHtml`, dev/prod 분기 — `frontend-ssr`
+- [ ] **백엔드**: Router(경로/파싱만)→Service(순수 로직) 계층 분리, 화면 라우터와 API 라우터가 동일 Service 함수 공유, `HTTPException`으로 통일된 에러 응답(422/404/409) — `fastapi-service-architecture`
+- [ ] **데이터**: `ddl/`이 SSOT이며 앱은 `MetaData().reflect()`로 읽기만 함(앱이 새 DB 객체를 만들지 않음), 상태 전이는 `ALLOWED_TRANSITIONS` 단일 소스 준수 — `fastapi-service-architecture`
+- [ ] **프론트**: 템플릿 상속(`{% extends %}`/`{% block %}`), PRG 패턴(POST→303), `status_badge` 필터 사용, autoescape 유지(고정값 외 `Markup`/`safe` 남용 금지) — `jinja2-ssr-frontend`
 - [ ] **배포/운영**: 이미지 태그 핀(`:latest` 금지), 자격증명 `.env` — `docker-compose-server-ops`
 
 ### 5. 테스트

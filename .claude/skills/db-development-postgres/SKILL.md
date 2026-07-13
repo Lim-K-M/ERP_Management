@@ -1,6 +1,6 @@
 ---
 name: db-development-postgres
-description: "PostgreSQL DB 객체(테이블·뷰·함수·프로시저) 생성/수정 시 따르는 네이밍·쿼리·설계 표준. 테이블/함수/트리거 작성, 스키마 변경, Prisma 연동 시 적용."
+description: "PostgreSQL DB 객체(테이블·뷰·함수·프로시저) 생성/수정 시 따르는 네이밍·쿼리·설계 표준. 테이블/함수/트리거 작성, 스키마 변경, ORM(SQLAlchemy Core 리플렉션/Prisma) 연동 시 적용."
 ---
 # DB 개발 표준 (PostgreSQL)
 
@@ -8,7 +8,7 @@ description: "PostgreSQL DB 객체(테이블·뷰·함수·프로시저) 생성/
 
 ## 경계 (담당 / 위임)
 - **담당**: DB 객체 네이밍, 쿼리 스타일, 공통 감사 컬럼, UUID, 감사 트리거, Prisma(SQL=SSOT) 연동.
-- **위임**: 감사 컬럼 "필수" 선언과 작성자(`_BY`) 값 주입·서비스 호출 흐름은 `backend-service-architecture`. 단, 감사 컬럼의 **타입·트리거 표준은 여기가 주인**.
+- **위임**: 감사 컬럼 "필수" 선언과 작성자(`_BY`) 값 주입·서비스 호출 흐름은 `fastapi-service-architecture`. 단, 감사 컬럼의 **타입·트리거 표준은 여기가 주인**.
 
 ## 핵심 규칙
 
@@ -63,13 +63,13 @@ create trigger T_USER_TRG
     for each row execute function F_AUDIT_LOG();
 ```
 
-### ORM 연동 (Prisma) — SQL이 진실의 원천(SSOT)
-- **방향**: 스키마는 SQL로 작성 → `prisma db pull`로 인트로스펙트. `prisma migrate` 금지.
-- **네이밍 보존**: 인트로스펙트된 `@@map("T_USER")`/`@map("CREATED_ON")`을 떼지 않는다.
-- **트리거·기본값은 SQL 소관**: `F_AUDIT_LOG()`·`uuidv7()`은 Prisma가 관리하지 않는다.
-- **Repository 계층 없음**: Service에서 Prisma Client 직접 호출. (`backend-service-architecture` §1-1)
-- **`_BY` 주입**: Prisma Client Extension으로 인증 컨텍스트의 `USER_ID`를 채운다. (`_ON`=트리거, `_BY`=앱 레이어)
-- **스키마 변경 절차**: SQL 수정 → DB 반영 → `prisma db pull` → `prisma generate`. `schema.prisma` 수기 편집 금지.
+### ORM 연동 (SQLAlchemy Core 리플렉션) — SQL이 진실의 원천(SSOT)
+- **방향**: 스키마는 SQL(`ddl/`)로 작성 → 앱은 `MetaData().reflect(only=[...])`로 인트로스펙트. 앱에서 `create_all`/migration으로 스키마를 만들지 않는다.
+- **네이밍 보존**: 리플렉션은 실제 컬럼/테이블명을 그대로 가져온다(unquoted 식별자는 Postgres가 소문자로 접는다 — `T_USER`→`t_user`). 별도 매핑 설정이 필요 없다.
+- **트리거·기본값은 SQL 소관**: `F_AUDIT_LOG()`·`gen_random_uuid()` 등은 앱 코드가 아니라 DDL이 관리한다.
+- **Repository 계층 없음**: Service에서 리플렉션된 `Table` 객체(`metadata.tables["t_user"]`)로 직접 쿼리한다. (`fastapi-service-architecture` §2)
+- **`_BY` 주입**: 인증 컨텍스트가 있는 프로젝트라면 Service 계층에서 `_BY` 값을 세팅한다. (`_ON`=트리거, `_BY`=앱 레이어). 인증이 없는 프로젝트는 `_BY`를 NULL로 유지한다.
+- **스키마 변경 절차**: SQL 수정 → DB 반영(`psql -f ddl/...`) → 앱의 `REFLECTED_TABLES` 화이트리스트에 반영. 앱 코드로 스키마를 역생성하지 않는다.
 
 ## 상세
 전체 규칙·예시·Client Extension 매핑은 `docs/DB_ARCHITECTURE_GUIDE.md` 참조.
