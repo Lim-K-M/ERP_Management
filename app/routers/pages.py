@@ -177,7 +177,6 @@ async def employee_list_page(
     status_counts = await employee_service.count_by_status(session)
     dept_counts = await employee_service.count_by_department(session)
     position_counts = await employee_service.count_by_position(session)
-    total_employee_count = sum(status_counts.values())
     sort_links, sort_state = _build_sort_links(request, sort, order)
 
     return templates.TemplateResponse(
@@ -192,7 +191,6 @@ async def employee_list_page(
             "status_counts": status_counts,
             "dept_counts": dept_counts,
             "position_counts": position_counts,
-            "total_employee_count": total_employee_count,
             "sort_links": sort_links,
             "sort_state": sort_state,
             "current_sort": sort,
