@@ -90,31 +90,34 @@ async def count_employees(session: AsyncSession, filters: EmployeeFilter | None 
     return await session.scalar(stmt)
 
 
-async def count_by_status(session: AsyncSession) -> dict[str, int]:
+async def count_by_status(session: AsyncSession, filters: EmployeeFilter | None = None) -> dict[str, int]:
     employee = metadata.tables["t_employee"]
     stmt = select(employee.c.emp_status, func.count()).group_by(employee.c.emp_status)
+    stmt = _apply_filters(stmt, employee, filters)
     result = await session.execute(stmt)
     return {row[0]: row[1] for row in result}
 
 
-async def count_by_department(session: AsyncSession) -> dict[int, int]:
+async def count_by_department(session: AsyncSession, filters: EmployeeFilter | None = None) -> dict[int, int]:
     employee = metadata.tables["t_employee"]
     stmt = (
         select(employee.c.dept_id, func.count())
         .where(employee.c.dept_id.is_not(None))
         .group_by(employee.c.dept_id)
     )
+    stmt = _apply_filters(stmt, employee, filters)
     result = await session.execute(stmt)
     return {row[0]: row[1] for row in result}
 
 
-async def count_by_position(session: AsyncSession) -> dict[int, int]:
+async def count_by_position(session: AsyncSession, filters: EmployeeFilter | None = None) -> dict[int, int]:
     employee = metadata.tables["t_employee"]
     stmt = (
         select(employee.c.position_id, func.count())
         .where(employee.c.position_id.is_not(None))
         .group_by(employee.c.position_id)
     )
+    stmt = _apply_filters(stmt, employee, filters)
     result = await session.execute(stmt)
     return {row[0]: row[1] for row in result}
 
