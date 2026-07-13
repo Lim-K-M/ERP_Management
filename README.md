@@ -203,3 +203,9 @@ spec §3 Bonus(인사 발령 이력 + 목록 페이지네이션)를 원 계획(T
 - **AI 활용 정리**(#17): `docs/internal/2026-07-08-ai-usage.md` — 계획서 우선 워크플로우, AI가 발견한 버그, 스펙 범위 밖 확장 승인 절차, AI 자신의 실수(사번 정규식 과일반화·`main` 직접 커밋·인코딩 문제)와 정정 과정 정리
 - **스킬 최종 점검**(#18): `fastapi-service-architecture`/`jinja2-ssr-frontend` 두 스킬을 실제 구현과 대조 — PRG 예제의 구버전 `TemplateResponse` 시그니처, `EmailStr`→커스텀 정규식 전환 등 stale한 부분 수정
 - **최종 PR 목록/커밋 로그 정리**(#19): `docs/internal/progress-checklist.md`에 전체 PR을 분류한 표 추가
+
+### 스킬 라우팅 정합성 재점검 + 사번 형식 재변경 (2026-07-13)
+
+- **스킬 라우팅 수정**: `backend-service-architecture`/`frontend-ssr`(다른 프로젝트용, 미사용)를 아직도 "정답"으로 가리키던 라우팅 문서 4곳을 이 프로젝트의 실제 스킬로 교체 — `.claude/rules/development-workflow.md`(always-on 규칙의 도메인 스킬 목록), `.claude/skills/README.md`(전체 스킬 지도를 FastAPI/Jinja2/PostgreSQL 기준으로 재작성, `db-development-postgres`를 ③으로 명시적 편입), `code-review-standard/SKILL.md`(리뷰 체크리스트), `db-development-postgres/SKILL.md` + 상세 가이드(Prisma 연동 섹션을 SQLAlchemy Core 리플렉션 기준으로 재작성). 두 미사용 스킬 자체는 손대지 않고 "다른 프로젝트용, 참고 보존"으로 명확히 표시만 함
+- **사번 형식 재변경**: PR #15에서 `^A\d{4}$`(알파벳 A 고정)로 확정했던 사번 형식을, 사용자가 원본 근거(스펙/계획서/AI활용정리 어디에도 "A"나 "E" 고정 요구는 없었음을 함께 확인 후) "알파벳 상관없이 숫자 4자리로만"으로 재확정해 `^\d{4}$`로 변경(`app/schemas/employee.py`)
+- **실제 DB 연동 검증 완료**: 옛 형식(`A0001`) 등록 시도 422 확인, 새 형식(`0001`) 등록 201 확인, 자릿수 오류(`00001`) 422 확인. 기존 시드 데이터 100명의 사번(`E1001~E1100`)도 새 형식(`1001~1100`)으로 일괄 변경

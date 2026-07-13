@@ -5,17 +5,16 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.core.constants import ALLOWED_TRANSITIONS
 
-EMP_NO_PATTERN = re.compile(r"^A\d{4}$")
+EMP_NO_PATTERN = re.compile(r"^\d{4}$")
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PHONE_PATTERN = re.compile(r"^\d{9,11}$")
 
-EMP_NO_FORMAT_ERROR = "사번은 알파벳 A + 숫자 4자리 형식이어야 합니다. (예: A0001)"
+EMP_NO_FORMAT_ERROR = "사번은 숫자 4자리로만 이루어져야 합니다. (예: 0001)"
 EMAIL_FORMAT_ERROR = "이메일 형식이 올바르지 않습니다."
 PHONE_FORMAT_ERROR = "전화번호는 숫자만 입력해주세요. (하이픈 없이, 9~11자리)"
 
 
 def _normalize_emp_no(value: str) -> str:
-    value = value.upper()
     if not EMP_NO_PATTERN.match(value):
         raise ValueError(EMP_NO_FORMAT_ERROR)
     return value
