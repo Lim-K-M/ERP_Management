@@ -16,13 +16,21 @@ from app.templating import templates
 
 router = APIRouter()
 
+PAGE_SIZE = 20
+HISTORY_PAGE_SIZE = 5
+
 
 def _validation_errors(exc: ValidationError) -> dict[str, str]:
     return {str(err["loc"][0]): err["msg"].removeprefix("Value error, ") for err in exc.errors()}
 
 
-def _optional_int(value: str | None) -> int | None:
-    return int(value) if value else None
+def _optional_int(value: str | None, field: str) -> int | None:
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        raise EmployeeValidationError({field: "숫자만 입력해주세요."}) from None
 
 
 def _employee_form_fields(form) -> dict:
@@ -32,13 +40,17 @@ def _employee_form_fields(form) -> dict:
         "email": form.get("email") or None,
         "phone": form.get("phone") or None,
         "hire_date": form.get("hire_date"),
-        "dept_id": _optional_int(form.get("dept_id")),
-        "position_id": _optional_int(form.get("position_id")),
-        "manager_id": _optional_int(form.get("manager_id")),
+        "dept_id": _optional_int(form.get("dept_id"), "dept_id"),
+        "position_id": _optional_int(form.get("position_id"), "position_id"),
+        "manager_id": _optional_int(form.get("manager_id"), "manager_id"),
     }
 
 
-PAGE_SIZE = 20
+def _safe_next_url(value: str | None) -> str:
+    """오픈 리다이렉트 방지: 이 앱 안의 상대 경로만 허용한다."""
+    if value and value.startswith("/") and not value.startswith("//") and not value.startswith("/\\"):
+        return value
+    return "/employees"
 
 
 def _build_sort_links(request: Request, sort: str, order: str) -> tuple[dict[str, str], dict[str, str | None]]:
@@ -73,9 +85,26 @@ def _page_numbers(current: int, total: int, window: int = 2) -> list[int | None]
     return numbers
 
 
+async def _history_pagination(session: AsyncSession, emp_id: int, page: int) -> dict:
+    total_count = await employment_history_service.count_history(session, emp_id)
+    total_pages = max(1, -(-total_count // HISTORY_PAGE_SIZE))
+    page = max(1, min(page, total_pages))
+    history = await employment_history_service.list_history(
+        session, emp_id, page=page, page_size=HISTORY_PAGE_SIZE
+    )
+    return {
+        "history": history,
+        "history_current_page": page,
+        "history_total_pages": total_pages,
+        "history_total_count": total_count,
+        "history_page_numbers": _page_numbers(page, total_pages),
+        "history_page_link": lambda p: f"/employees/{emp_id}?page={p}",
+    }
+
+
 @router.get("/login")
 async def login_page(request: Request, next: str = "/employees"):
-    return templates.TemplateResponse(request, "login.html", {"error": None, "next": next})
+    return templates.TemplateResponse(request, "login.html", {"error": None, "next": _safe_next_url(next)})
 
 
 @router.post("/login")
@@ -83,7 +112,7 @@ async def login_submit(request: Request):
     form = await request.form()
     username = form.get("username", "")
     password = form.get("password", "")
-    next_url = form.get("next") or "/employees"
+    next_url = _safe_next_url(form.get("next"))
 
     if verify_credentials(username, password):
         request.session["user"] = username
@@ -121,7 +150,13 @@ async def employee_list_page(
     if order not in ("asc", "desc"):
         order = "asc"
 
-    filters = EmployeeFilter(name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year)
+    try:
+        filters = EmployeeFilter(
+            name=name, dept_id=dept_id, position_id=position_id, status=status, hire_year=hire_year
+        )
+    except ValidationError as e:
+        raise HTTPException(status_code=422, detail=_validation_errors(e)) from e
+
     total_count = await employee_service.count_employees(session, filters)
     total_pages = max(1, -(-total_count // PAGE_SIZE))
     page = max(1, min(page, total_pages))
@@ -180,6 +215,13 @@ async def employee_register_submit(
 
     try:
         payload = EmployeeCreate(**_employee_form_fields(form))
+    except EmployeeValidationError as e:
+        return templates.TemplateResponse(
+            request,
+            "employees/register.html",
+            {"departments": departments, "positions": positions, "errors": e.errors, "form": form},
+            status_code=422,
+        )
     except ValidationError as e:
         errors = _validation_errors(e)
         return templates.TemplateResponse(
@@ -203,14 +245,16 @@ async def employee_register_submit(
 
 
 @router.get("/employees/{emp_id}")
-async def employee_detail_page(emp_id: int, request: Request, session: AsyncSession = Depends(get_session)):
+async def employee_detail_page(
+    emp_id: int, request: Request, page: int = 1, session: AsyncSession = Depends(get_session)
+):
     try:
         employee = await employee_service.get_employee(session, emp_id)
     except EmployeeNotFoundError as e:
         raise HTTPException(status_code=404, detail="직원을 찾을 수 없습니다.") from e
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
-    history = await employment_history_service.list_history(session, emp_id)
+    history_ctx = await _history_pagination(session, emp_id, page)
     return templates.TemplateResponse(
         request,
         "employees/detail.html",
@@ -221,7 +265,7 @@ async def employee_detail_page(emp_id: int, request: Request, session: AsyncSess
             "errors": {},
             "form": employee,
             "next_statuses": sorted(next_allowed_statuses(employee["emp_status"])),
-            "history": history,
+            **history_ctx,
         },
     )
 
@@ -241,7 +285,7 @@ async def employee_update_submit(
     form = await request.form()
     departments = await department_service.list_departments(session)
     positions = await position_service.list_positions(session)
-    history = await employment_history_service.list_history(session, emp_id)
+    history_ctx = await _history_pagination(session, emp_id, 1)
 
     def _render_error(errors: dict[str, str]):
         return templates.TemplateResponse(
@@ -254,13 +298,15 @@ async def employee_update_submit(
                 "errors": errors,
                 "form": form,
                 "next_statuses": sorted(next_allowed_statuses(employee["emp_status"])),
-                "history": history,
+                **history_ctx,
             },
             status_code=422,
         )
 
     try:
         payload = EmployeeUpdate(**_employee_form_fields(form))
+    except EmployeeValidationError as e:
+        return _render_error(e.errors)
     except ValidationError as e:
         errors = _validation_errors(e)
         return _render_error(errors)
