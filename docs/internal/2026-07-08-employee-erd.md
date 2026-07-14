@@ -73,7 +73,7 @@ erDiagram
 
 | 필드 | DDL 제약 | 애플리케이션 검증 (`app/schemas/employee.py`) |
 |---|---|---|
-| `EMP_NO` | `varchar(20)`, `UNQ_T_EMPLOYEE_EMP_NO` | 스펙: 필수·최대20자·고유. **별도 확장**: `^\d{4}$`(숫자 4자리)로 스펙보다 엄격하게 제한 |
+| `EMP_NO` | `varchar(20)`, `UNQ_T_EMPLOYEE_EMP_NO` | 스펙: 필수·최대20자·고유. **별도 확장**: `^1\d{3}$`(1로 시작하는 숫자 4자리)로 스펙보다 엄격하게 제한 |
 | `PHONE` | `varchar(20)` | 스펙: 선택·최대20자. **별도 확장**: 하이픈 없는 숫자 9~11자리 |
 | `EMAIL` | `varchar(255)` | 커스텀 정규식(형식 오류 시 한글 메시지) |
 | `EMP_STATUS` | `CK_T_EMPLOYEE_STATUS` (`ACTIVE`/`LEAVE`/`RESIGNED`) | `ALLOWED_TRANSITIONS` 단일 소스로 전이 규칙까지 검증(§2) |
