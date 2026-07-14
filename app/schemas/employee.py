@@ -5,11 +5,11 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.core.constants import ALLOWED_TRANSITIONS
 
-EMP_NO_PATTERN = re.compile(r"^[1-9]\d{3}$")
+EMP_NO_PATTERN = re.compile(r"^1\d{3}$")
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PHONE_PATTERN = re.compile(r"^\d{9,11}$")
 
-EMP_NO_FORMAT_ERROR = "사번은 0으로 시작할 수 없는 숫자 4자리여야 합니다. (예: 1001)"
+EMP_NO_FORMAT_ERROR = "사번은 1로 시작하는 숫자 4자리여야 합니다. (예: 1001)"
 EMAIL_FORMAT_ERROR = "이메일 형식이 올바르지 않습니다."
 PHONE_FORMAT_ERROR = "전화번호는 숫자만 입력해주세요. (하이픈 없이, 9~11자리)"
 
