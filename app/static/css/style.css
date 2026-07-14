@@ -346,20 +346,7 @@ h2 {
     margin-bottom: var(--space-1);
 }
 
-.toolbar {
-    display: flex;
-    align-items: center;
-    gap: var(--space-3);
-    flex-wrap: wrap;
-    margin-bottom: var(--space-4);
-}
-
-.toolbar input,
-.toolbar select {
-    max-width: 200px;
-}
-
-/* ---- 폼 입력 요소: .employee-form/.toolbar 등 어디서나 재사용 ---- */
+/* ---- 폼 입력 요소: .employee-form/.sidebar-filters 등 어디서나 재사용 ---- */
 input[type="text"],
 input[type="email"],
 input[type="date"],
