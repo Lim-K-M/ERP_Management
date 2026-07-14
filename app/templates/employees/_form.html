@@ -1,7 +1,7 @@
 <form method="post" class="employee-form">
     <div class="field">
         <label for="emp_no">사번</label>
-        <input id="emp_no" type="text" name="emp_no" value="{{ form.emp_no or '' }}" maxlength="20" placeholder="예: 0001" required>
+        <input id="emp_no" type="text" name="emp_no" value="{{ form.emp_no or '' }}" maxlength="20" placeholder="예: 1001" required>
         {% if errors.emp_no %}<p class="error">{{ errors.emp_no }}</p>{% endif %}
     </div>
 
