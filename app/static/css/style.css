@@ -233,10 +233,16 @@ h2 {
     color: var(--color-text-muted);
 }
 
-/* ---- 브랜드 배너 안 인원 수 (표 헤더 정렬 기준 컬럼에 맞춰 전환, 박스 가운데 배치) ---- */
+/* ---- 브랜드 배너 안 인원 수 (표 헤더 정렬 기준 컬럼에 맞춰 전환, 박스 가운데 배치) ----
+   상태(3칸)/직급·부서(5칸)로 표시되는 칩 개수가 달라 이 박스의 내용물 폭이
+   보기마다 달랐고, 그 폭에 맞춰 가운데 정렬되다 보니 필터/정렬을 바꿀 때마다
+   박스 자체가 좌우로 움직였다. 폭을 가장 넓은 경우(부서 5칸)에 맞춰 고정해
+   어떤 보기든 같은 자리에서 가운데 정렬되게 한다. */
 .brand-counts {
     grid-column: 2;
     justify-self: center;
+    width: 560px;
+    max-width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -323,6 +329,14 @@ h2 {
         overflow-y: visible;
     }
 
+    .list-main {
+        /* flex-direction:column에서는 min-width:0만으로 자식(표의 min-width)의
+           폭 밀어내기를 못 막는다 — 폭을 명시적으로 캡 해야 .table-wrap의
+           가로 스크롤에 맡겨진다 */
+        width: 100%;
+        max-width: 100%;
+    }
+
     .brand-banner {
         grid-template-columns: 1fr;
         justify-items: center;
@@ -330,6 +344,7 @@ h2 {
     }
 
     .brand-counts {
+        width: 100%;
         border-left: none;
         border-top: 1px solid var(--color-border);
         padding-left: 0;
@@ -445,10 +460,30 @@ select:focus {
     background: var(--color-surface);
 }
 
-/* ---- 테이블 ---- */
+/* ---- 테이블 ----
+   table-layout:fixed + 컬럼별 고정 폭 — auto 레이아웃은 페이지마다 실제 데이터
+   (이름/부서 글자 수)에 맞춰 컬럼 폭을 다시 계산해서, 필터/정렬을 바꿀 때마다
+   컬럼 경계가 미세하게 움직였다. 폭을 고정해 데이터가 바뀌어도 컬럼 위치가
+   그대로 유지되게 한다. */
 .employee-table {
     width: 100%;
+    min-width: 640px;
     border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.employee-table th:nth-child(1), .employee-table td:nth-child(1) { width: 13%; }
+.employee-table th:nth-child(2), .employee-table td:nth-child(2) { width: 15%; }
+.employee-table th:nth-child(3), .employee-table td:nth-child(3) { width: 22%; }
+.employee-table th:nth-child(4), .employee-table td:nth-child(4) { width: 13%; }
+.employee-table th:nth-child(5), .employee-table td:nth-child(5) { width: 22%; }
+.employee-table th:nth-child(6), .employee-table td:nth-child(6) { width: 15%; }
+
+.employee-table td:nth-child(2),
+.employee-table td:nth-child(3) {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .employee-table th,
@@ -464,6 +499,7 @@ select:focus {
     letter-spacing: 0.02em;
     color: var(--color-text-muted);
     background: var(--color-bg);
+    white-space: nowrap;
 }
 
 .employee-table tbody tr:hover {
