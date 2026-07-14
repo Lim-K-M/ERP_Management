@@ -51,7 +51,7 @@ Router(HTML/JSON) → Service(순수 로직) → 리플렉션된 Table. 별도 C
 | `emp_status` 등록 시 서버 강제 `ACTIVE` | `EmployeeCreate` 스키마에 `emp_status` 필드 자체를 두지 않음(클라이언트가 값을 보내도 무시) |
 | `emp_status` 값·전이 | §4 상태 전이 패턴 참고 |
 
-> **참고 — 스펙보다 엄격한 예외**: 이 프로젝트에서는 사용자 요청에 따라 `emp_no`(`^\d{4}$`, 숫자 4자리)와 `phone`(하이픈 없는 숫자 9~11자리)에 스펙 §4보다 엄격한 정규식 검증을 승인받아 추가했다(`docs/internal/progress-checklist.md` "스펙 범위 밖 별도 확장" 참고). 이런 예외는 **반드시 사용자 승인 후, 문서에 근거를 남기고** 추가한다 — 위 원칙("스펙에 없는 검증을 임의로 추가하지 않는다")의 예외 사례로 취급한다.
+> **참고 — 스펙보다 엄격한 예외**: 이 프로젝트에서는 사용자 요청에 따라 `emp_no`(`^1\d{3}$`, 1로 시작하는 숫자 4자리)와 `phone`(하이픈 없는 숫자 9~11자리)에 스펙 §4보다 엄격한 정규식 검증을 승인받아 추가했다(`docs/internal/progress-checklist.md` "스펙 범위 밖 별도 확장" 참고). 이런 예외는 **반드시 사용자 승인 후, 문서에 근거를 남기고** 추가한다 — 위 원칙("스펙에 없는 검증을 임의로 추가하지 않는다")의 예외 사례로 취급한다.
 >
 > **참고 — Pydantic v2 커스텀 validator 에러 메시지**: `field_validator`에서 `raise ValueError(msg)`를 하면 Pydantic이 자동으로 `"Value error, "` 접두사를 붙인다. 화면에 한글 메시지만 깔끔하게 보여주려면 라우터에서 `err["msg"].removeprefix("Value error, ")`로 벗겨낸다.
 

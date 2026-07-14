@@ -29,10 +29,10 @@
         development-workflow   ← "어떻게 일하나" (플랜-퍼스트 + Git·PR·커밋 규약)
 ══════════════════════════════════════════════════════════════
 도메인 레이어 (SKILL · 만드는 대상에 따라 켜짐)
-  ① 백엔드 서비스          ② 프론트             ③ 데이터        ④ 데브옵스/운영
+  ① 백엔드 서비스          ② 프론트             ③ 데이터        ④ 데브옵스/운영 (미작성)
   fastapi-service-       jinja2-ssr-        db-development-  docker-compose-
   architecture           frontend           postgres          server-ops
-  (계층·API·골격·엔트리)    (템플릿 렌더링)       (DB 객체 설계)     (도커 스택 운영)
+  (계층·API·골격·엔트리)    (템플릿 렌더링)       (DB 객체 설계)     (도커 스택 운영 — 실체 없음, 부록 참고)
 ──────────────────────────────────────────────────────────────
 협업 레이어 (SKILL · 여러 사람 작업을 합칠 때 켜짐)
   ⑤ code-review-standard   ← PR 리뷰 기준 (Git·PR·커밋 규약은 development-workflow가 담당)
@@ -41,7 +41,7 @@
   brainstorming(설계 구체화) · writing-plans(계획서 작성) · executing-plans(계획 실행)
 ```
 
-핵심: 도메인 스킬은 **역할별 동급**이며, 만드는 대상에 따라 켜진다. 영역이 겹치는 부분은 "주인"을 정해 서로 참조한다 — **백엔드 계층·프로젝트 골격·엔트리(`app/main.py`)는 ①**, **Jinja2 템플릿 렌더링은 ②**, **새 DB 객체(테이블/함수/트리거) 설계는 ③**, 도커 배포·운영은 ④. 협업 시 PR 리뷰는 ⑤가 기준이고, 개발 프로세스·Git 규약은 always-on **규칙**이다.
+핵심: 도메인 스킬은 **역할별 동급**이며, 만드는 대상에 따라 켜진다. 영역이 겹치는 부분은 "주인"을 정해 서로 참조한다 — **백엔드 계층·프로젝트 골격·엔트리(`app/main.py`)는 ①**, **Jinja2 템플릿 렌더링은 ②**, **새 DB 객체(테이블/함수/트리거) 설계는 ③**, 도커 배포·운영은 ④(단, ④는 실제로 작성된 적 없는 (미사용) 자리 — 아래 부록 참고). 협업 시 PR 리뷰는 ⑤가 기준이고, 개발 프로세스·Git 규약은 always-on **규칙**이다.
 
 > `ddl/`이 스키마의 SSOT이고 앱은 `MetaData().reflect()`로 읽기만 한다([`../../app/db/metadata.py`](../../app/db/metadata.py)). 새 테이블/함수를 설계할 때만 ③이 켜진다 — 앱이 스키마를 직접 만들지 않는다.
 
@@ -59,15 +59,7 @@
 ├── db-development-postgres/                    ← ③ 데이터: PostgreSQL DB 객체 설계
 │   ├── SKILL.md
 │   └── docs/DB_ARCHITECTURE_GUIDE.md
-├── docker-compose-server-ops/                  ← ④ 데브옵스: 도커 운영
-│   ├── SKILL.md
-│   └── references/                             ← 6개 상세 레퍼런스
-│       ├── architecture.md
-│       ├── logging.md
-│       ├── database-and-backup.md
-│       ├── automation.md
-│       ├── operations.md
-│       └── troubleshooting.md
+├── (docker-compose-server-ops/ 없음)            ← ④ 데브옵스 자리, (미사용/미작성) — 아래 §4·부록 참고
 ├── code-review-standard/                       ← ⑤ 협업: PR 리뷰 기준
 │   └── SKILL.md
 ├── brainstorming/                              ← 절차: 아이디어 → 설계 구체화
@@ -89,7 +81,7 @@
 - **검증**: Pydantic 필드/validator로 스펙 §4 규칙을 그대로 옮김. 스펙에 없는 검증(정규식 강화 등)은 사용자 승인 후에만 예외적으로 추가
 - **상태 전이**: `ALLOWED_TRANSITIONS` 단일 상수 + 순수 예외(`InvalidTransitionError`) → Router에서 409로 변환
 - **에러 응답**: `HTTPException`으로 통일(422/404/409/500), DB `IntegrityError`는 Service에서 사용자 친화적 메시지로 변환
-- **위임**: 화면 렌더링은 ② `jinja2-ssr-frontend`, 새 DB 객체 설계는 ③ `db-development-postgres`, 도커 배포는 ④ `docker-compose-server-ops`
+- **위임**: 화면 렌더링은 ② `jinja2-ssr-frontend`, 새 DB 객체 설계는 ③ `db-development-postgres`, 도커 배포는 ④ `docker-compose-server-ops`(미사용/미작성 — 부록 참고)
 
 ## 2. `jinja2-ssr-frontend` (② 프론트)
 **Jinja2 서버사이드 렌더링 화면 레이어** (이 프로젝트 전용, 프로젝트 골격·엔트리는 ①이 주인)
@@ -108,16 +100,18 @@
 - **ORM 연동**: SQL이 SSOT → 앱은 `MetaData().reflect()`로 읽기만 함(마이그레이션 금지). Repository 계층 없이 Service가 리플렉션된 Table을 직접 쿼리
 - **적용 시점**: `ddl/`에 새 테이블/함수/트리거를 추가하거나 기존 것을 바꿀 때만 켜진다 — 이 프로젝트는 대부분 `ddl/`이 이미 확정돼 있어 자주 켜지지 않음
 
-## 4. `docker-compose-server-ops` (④ 데브옵스/운영)
-**Docker Compose 단일 스택으로 서버를 구축·운영하는 데브옵스 표준** (검증 예시: 산업용 AI 서버 — 산업 AI 구성은 예시이며 프로젝트에 맞게 치환)
+## 4. `docker-compose-server-ops` (④ 데브옵스/운영) — (미사용/미작성)
 
-- **올-도커 철학**: 여러 PC가 동일 이미지 사용 → 환경 동일화. `:latest` 금지, 태그 핀 권장
-- **시작 순서**: `depends_on` + healthcheck
-- **로그/백업**: 파일 30일 + Docker 드라이버 캡
-- **오버레이**: `docker-compose.yml` + `override`(개발) + `prod`(현장), profile 토글
-- **신규 프로젝트 시작점**: `references/architecture.md` **§0 프로젝트 환경 프로파일** 표부터 채운다 (환경 종속값이 거기에 모여 있음)
-- 6개 레퍼런스: `architecture` / `logging` / `database-and-backup` / `automation` / `operations` / `troubleshooting`
-- **이 프로젝트 적용 범위**: 스펙 §7에 따라 배포는 하지 않음 — `docker-compose.yml`은 로컬 PostgreSQL/pgAdmin 실행에만 사용, 위 배포 표준 대부분은 비해당
+> **이 스킬은 실제로 작성된 적이 없다.** 초기 커밋 때부터 ④번 자리로 이 이름이 도메인 지도·라우팅 문서 여러 곳(이 문서, `development-workflow.md`, `code-review-standard/SKILL.md` 등)에 계속 언급돼 왔지만, `SKILL.md`도 `references/`도 실제로 만들어진 적이 없다(`git log`로 확인해도 이 폴더가 생성된 이력 자체가 없음). 이 프로젝트는 스펙 §7에 따라 **배포를 하지 않고 로컬 `uvicorn`만 실행**하므로 실제로 필요했던 적이 없었던 것으로 보인다 — `docker-compose.yml`은 로컬 PostgreSQL/pgAdmin 실행에만 쓰인다.
+>
+> 아래는 애초에 의도했던 내용(참고용으로만 남겨둠 — 실체 없음):
+> - **올-도커 철학**: 여러 PC가 동일 이미지 사용 → 환경 동일화. `:latest` 금지, 태그 핀 권장
+> - **시작 순서**: `depends_on` + healthcheck
+> - **로그/백업**: 파일 30일 + Docker 드라이버 캡
+> - **오버레이**: `docker-compose.yml` + `override`(개발) + `prod`(현장), profile 토글
+> - 6개 레퍼런스 예정: `architecture` / `logging` / `database-and-backup` / `automation` / `operations` / `troubleshooting`
+>
+> 다른 참조는 삭제하지 않고 모두 "(미사용/미작성)"으로 표시만 해뒀다 — 실제로 Docker 기반 배포/운영 작업이 생기면 이 자리에 `SKILL.md`를 새로 작성하면 된다.
 
 ## 5. `code-review-standard` (⑤ 협업)
 **PR/diff 리뷰 시 따르는 공통 코드리뷰 표준** — 여러 사람이 각자 AI로 일해도 머지 품질을 일정하게 유지.
@@ -158,9 +152,9 @@
 - **하는 일**: `app/templates/`에 화면 추가(`{% extends "base.html" %}`) → PRG 패턴으로 폼 제출 처리, 동적 데이터는 autoescape로 보호
 
 ### 5단계 — 배포/운영 (이 프로젝트는 로컬 DB 실행에만 해당)
-- **부르는 스킬**: `docker-compose-server-ops`
+- **부르는 스킬**: `docker-compose-server-ops` — (미사용/미작성, 위 §4 참고. 실제로는 이 단계 자체가 켜진 적 없음)
 - **트리거 예시**: *"docker-compose에 새 서비스 추가해줘"*
-- **하는 일**: `docker-compose.yml`로 PostgreSQL/pgAdmin 실행. 스펙 §7에 따라 실제 배포는 하지 않으므로, 이 스킬의 배포/운영 표준 대부분은 이 프로젝트엔 비해당
+- **하는 일**: `docker-compose.yml`로 PostgreSQL/pgAdmin 실행. 스펙 §7에 따라 실제 배포는 하지 않으므로, 이 단계는 사실상 발동되지 않았다
 
 ### 6단계 — 리뷰/머지 (협업)
 - **부르는 스킬**: `code-review-standard`
@@ -180,6 +174,12 @@
 
 ---
 
-## 부록: 다른 프로젝트용 미사용 스킬
+## 부록: 미사용 스킬 (2종)
 
-`backend-service-architecture`(Node.js/Express)·`frontend-ssr`(Vanilla HTML SSR)는 이 프로젝트가 시작되기 전 다른 프로젝트("kist")에서 검증된 템플릿이며, 이 프로젝트의 실제 스택(FastAPI/Jinja2)과 맞지 않아 **그대로 두고 대체용으로 ①②를 새로 작성**했다. 두 파일은 초기 커밋 이후 수정된 적이 없고, 이 문서를 포함한 어떤 라우팅 문서에서도 더 이상 참조하지 않는다. 삭제하지 않은 이유는 향후 실제로 Node.js/Express 프로젝트를 다룰 일이 생기면 참고용으로 쓸 수 있기 때문 — 이 프로젝트 작업에는 관여하지 않는다.
+**1) 다른 프로젝트용 템플릿 — `backend-service-architecture`(Node.js/Express)·`frontend-ssr`(Vanilla HTML SSR)**
+
+이 프로젝트가 시작되기 전 다른 프로젝트("kist")에서 검증된 템플릿이며, 이 프로젝트의 실제 스택(FastAPI/Jinja2)과 맞지 않아 **그대로 두고 대체용으로 ①②를 새로 작성**했다. 두 파일은 초기 커밋 이후 수정된 적이 없고, 이 문서를 포함한 어떤 라우팅 문서에서도 더 이상 참조하지 않는다. 삭제하지 않은 이유는 향후 실제로 Node.js/Express 프로젝트를 다룰 일이 생기면 참고용으로 쓸 수 있기 때문 — 이 프로젝트 작업에는 관여하지 않는다.
+
+**2) 참조는 있지만 실체가 없는 자리 — `docker-compose-server-ops`(④ 데브옵스/운영)**
+
+위 §4에 적었듯, 이 스킬은 폴더/`SKILL.md` 자체가 만들어진 적이 없다(`git log`로 생성 이력 없음 확인). 스펙 §7("배포 안 함, 로컬 uvicorn만 실행")상 실제로 필요하지 않았기 때문으로 보인다. 이 문서·`.claude/rules/development-workflow.md`·`code-review-standard/SKILL.md` 등에 남아있는 참조는 삭제하지 않고 전부 "(미사용/미작성)"으로 표시만 해뒀다 — 실제 Docker 배포/운영 작업이 생기면 그때 `SKILL.md`를 새로 작성해 이 자리를 채우면 된다.

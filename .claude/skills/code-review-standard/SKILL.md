@@ -40,7 +40,7 @@ description: PR/변경 diff를 리뷰할 때 따르는 프로젝트 코드리뷰
 - [ ] **백엔드**: Router(경로/파싱만)→Service(순수 로직) 계층 분리, 화면 라우터와 API 라우터가 동일 Service 함수 공유, `HTTPException`으로 통일된 에러 응답(422/404/409) — `fastapi-service-architecture`
 - [ ] **데이터**: `ddl/`이 SSOT이며 앱은 `MetaData().reflect()`로 읽기만 함(앱이 새 DB 객체를 만들지 않음), 상태 전이는 `ALLOWED_TRANSITIONS` 단일 소스 준수 — `fastapi-service-architecture`
 - [ ] **프론트**: 템플릿 상속(`{% extends %}`/`{% block %}`), PRG 패턴(POST→303), `status_badge` 필터 사용, autoescape 유지(고정값 외 `Markup`/`safe` 남용 금지) — `jinja2-ssr-frontend`
-- [ ] **배포/운영**: 이미지 태그 핀(`:latest` 금지), 자격증명 `.env` — `docker-compose-server-ops`
+- [ ] **배포/운영**: 이미지 태그 핀(`:latest` 금지), 자격증명 `.env` — `docker-compose-server-ops`(미사용/미작성 — 이 프로젝트는 배포하지 않아 실제로 해당 없음, `.claude/skills/README.md` §4·부록 참고)
 
 ### 5. 테스트
 - [ ] 크리티컬 로직(결제·권한·제어 등)에 단위 테스트가 있는가.

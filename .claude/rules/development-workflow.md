@@ -54,7 +54,7 @@
 - 커밋은 **의미 단위**로 나눈다.
 - 기존 주석·docstring은 변경 대상이 아니면 **보존**한다.
 - 기존 기능에 영향을 주는 변경은 **회귀 확인**을 동반한다.
-- 영역별 도메인 표준 스킬(`fastapi-service-architecture`/`db-development-postgres`/`jinja2-ssr-frontend`/`docker-compose-server-ops`)을 따른다.
+- 영역별 도메인 표준 스킬(`fastapi-service-architecture`/`db-development-postgres`/`jinja2-ssr-frontend`/`docker-compose-server-ops`(미사용/미작성 — 이 프로젝트는 배포를 하지 않아 실제로 켜진 적 없음, `.claude/skills/README.md` §4·부록 참고))을 따른다.
 - 계획서대로 실행할 때는 `executing-plans` 스킬을 사용한다.
 
 ### ⑥ 검증 ✋
